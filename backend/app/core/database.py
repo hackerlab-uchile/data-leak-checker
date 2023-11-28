@@ -1,13 +1,18 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from config import POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_SERVER, POSTGRES_DB
+from .config import (
+    POSTGRES_DB,
+    POSTGRES_PASSWORD,
+    POSTGRES_SERVER,
+    POSTGRES_USER,
+)
 
-DATABASE_URL = f"postgresql+psycopg3://{POSTGRES_DB}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
+DATABASE_URL: str = f"postgresql+psycopg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
 
 engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(
-    autocommit=False, autoFlush=False, expire_on_commit=False, bind=engine
+    autocommit=False, autoflush=False, expire_on_commit=False, bind=engine
 )
 
 
@@ -18,7 +23,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
 
 class Base(DeclarativeBase):
     pass

@@ -1,25 +1,21 @@
 import os
 
-print(f"\nDIRECTORY: {os.getcwd()}\n")
-print(f"\nELEMENTS: {os.listdir()}\n")
-
-from platform import python_version
-
+import init_db
 from api.route_base import api_router
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
 def init_app():
-    app = FastAPI()
-    app.include_router(api_router)
+    """Inits the application"""
+    new_app = FastAPI()
+    new_app.include_router(api_router)
 
     allowed_origins = os.getenv(
         "CORS_ORIGINS", "http://localhost:3000,http://localhost:8000"
     ).split(",")
 
-    app.add_middleware(
+    new_app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
@@ -27,8 +23,7 @@ def init_app():
         allow_headers=["*"],
     )
 
-    return app
+    return new_app
 
 
-print("Python Version:", python_version())
 app = init_app()
