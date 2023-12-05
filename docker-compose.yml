@@ -34,5 +34,16 @@ services:
       db:
         condition: service_healthy
 
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend/app:/app
+    ports:
+      - 3000:3000
+    environment:
+      - WATCHPACK_POLLING=true
+      - NEXT_PUBLIC_BACKEND_URL
+      - NEXT_PUBLIC_FRONTEND_URL
+
 volumes:
   db-data:
