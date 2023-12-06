@@ -10,3 +10,6 @@ class Email(Base):
     email = Column(String(100))
     breach_found = Column(Integer, ForeignKey("breaches.id"))
     breach = relationship("Breach", foreign_keys=[breach_found])
+
+    def __repr__(self):
+        return f"Email(id={self.id}, email={self.email}, breach_found={self.breach_found}, breach={self.breach})"
