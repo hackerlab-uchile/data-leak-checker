@@ -59,7 +59,7 @@ export default function Home() {
                 <div className='flex flex-col w-full'>
                   <div className='flex flex-col w-full'>
                     {breaches.map((breach) => (
-                      <div className='my-1 p-4 border rounded-lg w-full'>
+                      <div key={breach.id} className='my-1 p-4 border rounded-lg w-full'>
                         <h4 className='text-lg font-bold'>{breach.name}</h4>
                         <p>{breach.description}</p>
                         <p>{`Fecha de subida: ${breach.upload_date.slice(0, 10)}`}</p>
