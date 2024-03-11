@@ -9,6 +9,6 @@ class Breach(Base):
     name = Column(String(150), nullable=False)
     description = Column(String(300))
     breach_date = Column(Date)
-    upload_date = Column(Date, server_default=func.now())
+    created_at = Column(Date, server_default=func.now())
     confirmed = Column(Boolean)
     is_sensitive = Column(Boolean)

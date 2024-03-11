@@ -1,3 +1,16 @@
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import Search from '@/components/Search'
 import Navbar from '@/components/Navbar'
 import Image from 'next/image'
@@ -6,6 +19,7 @@ import { Breach } from '@/models/Breach';
 import { getBreachesByEmail } from '@/api/api';
 import { MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
+import Link from "next/link"
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -26,22 +40,70 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-start p-24">
       <Navbar />
-      <div className="z-10 max-w-5xl w-full items-start justify-between font-mono text-sm lg:flex flex-col">
-        <div className='self-start w-[60%]'>
-          <h3 className='font-bold'>Verificación de correo electrónico</h3>
-          <p>Ingrese el correo electrónico que desea consultar. Se revisará si dicho correo fue encontrado en alguna filtración de datos que tengamos conocimiento.</p>
-        </div>
-      </div>
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <form onSubmit={handleSearch} className='w-full'>
-          <Search
-            placeholder={'Consulte un email...'}
-            searchTerm={search}
-            setSearchTerm={setSearch}
-          />
-        </form>
+      <div className="flex flex-col w-full items-center justify-start">
+      {/* </div> */}
+
+      {/* <div className="z-10 max-w-5xl w-full font-mono text-sm lg:flex flex-col"> */}
+        {/* <div className='flex-col w-[80%]'> */}
+          <h3 className='font-bold'>Búsqueda por:</h3>
+          <Tabs defaultValue="email" className="w-[80%]">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="rut">RUT</TabsTrigger>
+              <TabsTrigger value="phone">Phone</TabsTrigger>
+            </TabsList>
+            <TabsContent value="email">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email</CardTitle>
+                  <CardDescription>
+                    Ingrese el correo electrónico que desea consultar. Se revisará si dicho correo fue encontrado en alguna filtración de datos que tengamos conocimiento.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
+                    <form onSubmit={handleSearch} className='w-full'>
+                      <Search
+                        placeholder={'Consulte un email...'}
+                        searchTerm={search}
+                        setSearchTerm={setSearch}
+                      />
+                    </form>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-row items-center justify-center">
+                  <Button>Buscar</Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            <TabsContent value="rut">
+              <Card>
+                <CardHeader>
+                  <CardTitle>RUT</CardTitle>
+                  <CardDescription>
+                    holi
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
+                    <form onSubmit={handleSearch} className='w-full'>
+                      <Search
+                        placeholder={'Consulte un RUT...'}
+                        searchTerm={search}
+                        setSearchTerm={setSearch}
+                      />
+                    </form>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-row items-center justify-center">
+                  <Button>Buscar</Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        {/* </div> */}
       </div>
 
       {responseReceived && (
@@ -62,7 +124,7 @@ export default function Home() {
                       <div key={breach.id} className='my-1 p-4 border rounded-lg w-full'>
                         <h4 className='text-lg font-bold'>{breach.name}</h4>
                         <p>{breach.description}</p>
-                        <p>{`Fecha de subida: ${breach.upload_date.slice(0, 10)}`}</p>
+                        <p>{`Fecha de subida: ${breach.created_at.slice(0, 10)}`}</p>
                       </div>
                     ))}
                   </div>

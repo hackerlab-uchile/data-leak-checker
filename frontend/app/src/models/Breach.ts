@@ -5,6 +5,6 @@ export interface Breach {
     description: boolean;
     // breach_date: Date;
     breach_date: string;
-    upload_date: string;
+    created_at: string;
     // upload_date: Date;
 }
