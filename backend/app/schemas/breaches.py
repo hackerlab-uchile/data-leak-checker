@@ -16,7 +16,7 @@ class BreachCreate(BreachBase):
 
 class Breach(BreachBase):
     id: PositiveInt
-    upload_date: datetime
+    created_at: datetime
     
     class Config:
         orm_model = True
