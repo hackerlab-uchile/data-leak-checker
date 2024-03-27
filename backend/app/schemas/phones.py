@@ -1,15 +1,15 @@
 from pydantic import BaseModel, PositiveInt
 
 
-class EmailBase(BaseModel):
+class PhoneBase(BaseModel):
     value: str
 
 
-class EmailCreate(EmailBase):
+class PhoneCreate(PhoneBase):
     pass
 
 
-class Email(EmailBase):
+class Phone(PhoneBase):
     id: PositiveInt
 
     class Config:
