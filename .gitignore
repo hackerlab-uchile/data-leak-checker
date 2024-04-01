@@ -1,8 +1,10 @@
 # personal
 .todo
+backend/app/tools/data
 
 # Byte-compiled
 __pycache__/
+
 
 # Environments
 .env
