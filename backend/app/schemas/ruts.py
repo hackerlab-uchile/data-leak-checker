@@ -1,15 +1,15 @@
 from pydantic import BaseModel, PositiveInt
 
 
-class EmailBase(BaseModel):
+class RutBase(BaseModel):
     value: str
 
 
-class EmailCreate(EmailBase):
+class RutCreate(RutBase):
     pass
 
 
-class Email(EmailBase):
+class Rut(RutBase):
     id: PositiveInt
 
     class Config:
