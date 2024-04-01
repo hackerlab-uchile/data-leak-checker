@@ -1,4 +1,5 @@
 from core.database import Base, engine, test_engine
+from models.breach_data import BreachData
 from models.breaches import Breach
 from models.data_types import DataType
 from models.email_leaks import EmailLeak

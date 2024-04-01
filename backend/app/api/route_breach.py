@@ -1,3 +1,4 @@
+from hashlib import sha256
 from typing import List
 
 from core.database import get_db
@@ -27,8 +28,9 @@ def create_breach(breach: BreachCreate, db: Session = Depends(get_db)):
 @router.get("/email/{email}", response_model=List[BreachSchema])
 def get_breachdata_by_email(email: EmailStr, db: Session = Depends(get_db)):
     """Returns information about data breaches related to an email"""
+    email_hash = sha256(email.encode("utf-8")).hexdigest()
     found_breaches = (
-        db.query(Breach).join(EmailLeak).join(Email).filter(Email.value == email)
+        db.query(Breach).join(EmailLeak).join(Email).filter(Email.value == email_hash)
     ).all()
     return found_breaches
 

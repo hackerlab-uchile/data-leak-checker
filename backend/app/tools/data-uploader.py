@@ -1,3 +1,4 @@
+import enum
 import json
 import os
 import sys
@@ -5,7 +6,16 @@ from datetime import datetime
 from hashlib import sha256
 
 from core.database import get_db
+from models.email_leaks import EmailLeak
+from models.emails import Email
+from models.phone_leaks import PhoneLeak
+from models.phones import Phone
+from models.rut_leaks import RutLeak
+from models.ruts import Rut
 from repositories.breach_repository import create_breach
+from repositories.data_type_repository import get_data_type_by_name, save_breach_data
+from repositories.email_repository import get_or_create
+from schemas.breach_data import BreachDataCreate
 from schemas.breaches import BreachCreate
 
 
@@ -90,7 +100,7 @@ def handle_upload_file(f_path: str):
 
     if valid_upload_file(upload_data):
         data_leak = handle_csv_file(upload_data["data_path"])
-        display_data(upload_data)
+        # display_data(upload_data)
         display_data(data_leak)
         return upload_data, data_leak
     return None, None
@@ -109,19 +119,81 @@ def main() -> int:
         upload_data, data_leak = handle_upload_file(f_path)
         if upload_data is None or data_leak is None:
             return 1
-        date = datetime.strptime("2024-03-22", "%Y-%m-%d")
-        breach_data = {
-            "name": upload_data["breach"],
-            "description": upload_data["description"],
-            "breach_date": date,
-            "confirmed": True,
-            "is_sensitive": True,
-        }
-        breach_to_create = BreachCreate(**breach_data)
-        print("breach_schema:", breach_to_create)
-        # created_breach = create_breach(**breach_to_create.model_dump())
+        # Obtenemos acceso a la db
         session = get_db().__next__()
+        breach = upload_data["breach"]
+        breach["date"] = datetime.strptime(breach["breach_date"], "%Y-%m-%d")
+        breach_to_create = BreachCreate(**breach)
+        print("breach_schema:", breach_to_create)
+        # En estos momentos, tengo guardada la filtración así:
+        # data_leak = { "column" : [...], "column" : [....] }
+        # En total se deben guardar datos en estas tablas:
+        # 1. Breach
+        # 2. Breach Data (relaciona un Breach con la data filtrada)
+        # 3. {Dato} (Email, Phone, Rut)
+        # 4. {Dato Leak} (Relaciona un Dato con un breach y INFO ADICIONAL que lo acompaña)
+        # 5. Password (hash: sha256)
+        # ------
+        # 1. Guardamos el Breach
         created_breach = create_breach(db=session, breach=breach_to_create)
+        for col, items in data_leak.items():
+            # 2. Guardamos la info encontrada con el breach (nombre de columnas)
+            column_data_type = get_data_type_by_name(db=session, name=col)
+            if column_data_type is None:
+                print(f"Error: Column with name {col} is not a valid data type!")
+                continue
+            breach_data_to_create = {
+                "breach_id": created_breach.id,
+                "data_type_id": column_data_type.id,
+            }
+            created_breach_data = save_breach_data(db=session, **breach_data_to_create)
+            # 3. Guardar {Dato}. Revisar si ya existe o no
+            model = Email
+            model_leak = EmailLeak
+            leak_data_name = "email_id"
+            match column_data_type.dtype:
+                case "email":
+                    pass
+                case "phone":
+                    model = Phone
+                    model_leak = PhoneLeak
+                    leak_data_name = "phone_id"
+                case "rut":
+                    model = Rut
+                    model_leak = RutLeak
+                    leak_data_name = "rut_id"
+                case _:
+                    continue
+            for i, item in enumerate(items):
+                if item == "":  # or no tiene forma de Email
+                    continue
+                # a. Check if already exists
+                # a2. If doesnt exist -> save it
+                # a3. else -> get it
+                data = get_or_create(session, model, value=item)
+                for other_data in data_leak.keys():
+                    if other_data == col:
+                        continue
+                    column_data_type = get_data_type_by_name(
+                        db=session, name=other_data
+                    )
+                    if column_data_type is None:
+                        print(
+                            f"Error: Column with name {other_data} is not a valid data type!"
+                        )
+                        continue
+                    data_leak_created = get_or_create(
+                        db=session,
+                        model=model_leak,
+                        breach_id=created_breach.id,
+                        data_type_id=column_data_type.id,
+                        **{leak_data_name: data.id},
+                    )
+
+        # TODO: Guardamos los nuevos datos en su tabla (ej. Email), (si es que no existen ya)
+        # TODO: Guardamos la relación de los datos con el breaach (ej. EmailLeak)
+        # TODO: Guardamos la relación de los datos con el breaach y con los datos que se encontró (ej. EmailLeak)
+        # TODO: Guardamos el hash en contraseñas
         print(created_breach)
     return 0
 
