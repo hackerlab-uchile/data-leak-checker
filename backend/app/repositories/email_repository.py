@@ -11,7 +11,7 @@ T = TypeVar("T", bound=Any)
 
 
 def get_or_create(db: Session, model: T, **kwargs) -> T:
-    instance = db.query(model).filter_by(**kwargs).first()
+    instance = db.query(model).filter_by(**kwargs).one_or_none()
     if instance:
         return instance
     else:

@@ -15,6 +15,7 @@ from models.ruts import Rut
 from repositories.breach_repository import create_breach
 from repositories.data_type_repository import get_data_type_by_name, save_breach_data
 from repositories.email_repository import get_or_create
+from repositories.password_repository import add_or_create_all_passwords
 from schemas.breach_data import BreachDataCreate
 from schemas.breaches import BreachCreate
 
@@ -62,7 +63,9 @@ def handle_csv_file(f_path: str):
     for row in all_rows:
         values = row.split(sep)
         for i, c in enumerate(columns):
-            value = sha256(values[i].encode("UTF-8")).hexdigest()
+            value = values[i]
+            if c == "password":
+                value = sha256(values[i].encode("UTF-8")).hexdigest()
             data[c].append(value)
     display_data(data)
     return data
@@ -121,8 +124,13 @@ def main() -> int:
             return 1
         # Obtenemos acceso a la db
         session = get_db().__next__()
-        breach = upload_data["breach"]
-        breach["date"] = datetime.strptime(breach["breach_date"], "%Y-%m-%d")
+        breach = {
+            "name": upload_data["breach"],
+            "description": upload_data["description"],
+            "breach_date": datetime.strptime(upload_data["breach_date"], "%Y-%m-%d"),
+            "confirmed": True,
+            "is_sensitive": True,
+        }
         breach_to_create = BreachCreate(**breach)
         print("breach_schema:", breach_to_create)
         # En estos momentos, tengo guardada la filtración así:
@@ -162,6 +170,9 @@ def main() -> int:
                     model = Rut
                     model_leak = RutLeak
                     leak_data_name = "rut_id"
+                case "password":
+                    add_or_create_all_passwords(session, list_passwords=items)
+                    continue
                 case _:
                     continue
             for i, item in enumerate(items):
@@ -189,6 +200,7 @@ def main() -> int:
                         data_type_id=column_data_type.id,
                         **{leak_data_name: data.id},
                     )
+        # session.commit()
 
         # TODO: Guardamos los nuevos datos en su tabla (ej. Email), (si es que no existen ya)
         # TODO: Guardamos la relación de los datos con el breaach (ej. EmailLeak)

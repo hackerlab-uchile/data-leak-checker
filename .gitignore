@@ -1,6 +1,7 @@
 # personal
 .todo
 backend/app/tools/data
+.envrc
 
 # Byte-compiled
 __pycache__/
