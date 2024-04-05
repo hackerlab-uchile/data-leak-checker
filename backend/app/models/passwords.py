@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String
 class Password(Base):
     __tablename__ = "passwords"
     id = Column(Integer, primary_key=True)
-    hash_password = Column(String(64))
+    hash_password = Column(String(64), unique=True)
     count = Column(Integer, default=0)
 
     def __repr__(self):
