@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
+import CryptoJS from "crypto-js";
 import { FormEvent, useState } from "react";
 import { Breach } from "@/models/Breach";
 import { getBreachesByQueryType, QueryType } from "@/api/api";
@@ -28,7 +29,8 @@ export default function Home() {
   async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchEmail) {
-      const emailQuery = searchEmail;
+      const emailQuery = CryptoJS.SHA256(searchEmail).toString(CryptoJS.enc.Hex);
+      console.log(emailQuery);
       const breachesList: Breach[] = await getBreachesByQueryType(emailQuery, QueryType.Email);
       setBreaches(breachesList);
       setResponseReceived(true);
@@ -38,7 +40,7 @@ export default function Home() {
   async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchRut) {
-      const rutQuery = searchRut;
+      const rutQuery = CryptoJS.SHA256(searchRut).toString(CryptoJS.enc.Hex);
       const breachesList: Breach[] = await getBreachesByQueryType(rutQuery, QueryType.Rut);
       setBreaches(breachesList);
       setResponseReceived(true);
@@ -48,7 +50,7 @@ export default function Home() {
   async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchPhone) {
-      const phoneQuery = searchPhone;
+      const phoneQuery = CryptoJS.SHA256(searchPhone).toString(CryptoJS.enc.Hex);
       const breachesList: Breach[] = await getBreachesByQueryType(phoneQuery, QueryType.Phone);
       setBreaches(breachesList);
       setResponseReceived(true);
@@ -65,6 +67,7 @@ export default function Home() {
       search: searchEmail,
       setSearch: setSearchEmail,
       inputHint: "Consulte un email...",
+      name: "correo",
     },
     {
       title: "RUT",
@@ -75,6 +78,7 @@ export default function Home() {
       search: searchRut,
       setSearch: setSearchRut,
       inputHint: "Consulte un RUT...",
+      name: "RUT",
     },
     {
       title: "Número telefónico",
@@ -86,6 +90,7 @@ export default function Home() {
       search: searchPhone,
       setSearch: setSearchPhone,
       inputHint: "Consulte un número telefónico...",
+      name: "número telefónico",
     },
   ];
 
@@ -146,8 +151,8 @@ export default function Home() {
                             className="self-center"
                           />
                           <p className="pl-3 self-center">
-                            Su correo ha sido encontrado en las siguiente
-                            filtraciones:
+                            {`Este ${item.name} ha sido encontrado en las siguientes
+                            filtraciones:`}
                           </p>
                         </div>
                         <div className="flex flex-col w-full">
@@ -178,7 +183,7 @@ export default function Home() {
                           className="self-center"
                         />
                         <p className="pl-3 self-center">
-                          Su correo <strong>NO</strong> ha sido encontrado en
+                          {`Este ${item.name} `} <strong>NO</strong> ha sido encontrado en
                           filtraciones de nuestro conocimiento.
                         </p>
                       </div>

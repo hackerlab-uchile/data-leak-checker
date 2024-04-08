@@ -11,16 +11,18 @@ export enum QueryType {
 
 export async function getBreachesByQueryType(query: string, type: QueryType): Promise<Breach[]> {
     let response;
+    const data = {"value": query};
     try {
         switch (type) {
             case QueryType.Email:
-                response = await apiClient.get<Breach[]>(`/breach/email/${query}`);
+                response = await apiClient.post<Breach[]>("/breach/email/", data);
                 return response.data;
             case QueryType.Rut:
-                response = await apiClient.get<Breach[]>(`/breach/rut/${query}`);
+                // response = await apiClient.get<Breach[]>(`/breach/rut/${query}`);
+                response = await apiClient.post<Breach[]>("/breach/rut/", data);
                 return response.data;
             case QueryType.Phone:
-                response = await apiClient.get<Breach[]>(`/breach/phone/${query}`);
+                response = await apiClient.post<Breach[]>("/breach/phone/", data);
                 return response.data;
             default:
                 return [];
