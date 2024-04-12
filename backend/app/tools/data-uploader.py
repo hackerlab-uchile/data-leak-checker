@@ -6,17 +6,11 @@ from datetime import datetime
 from hashlib import sha256
 
 from core.database import get_db
-from models.email_leaks import EmailLeak
-from models.emails import Email
-from models.phone_leaks import PhoneLeak
-from models.phones import Phone
-from models.rut_leaks import RutLeak
-from models.ruts import Rut
+from models.data_leaks import DataLeak
 from repositories.breach_repository import create_breach
 from repositories.data_type_repository import get_data_type_by_name, save_breach_data
-from repositories.email_repository import create_all_emails, get_or_create
+from repositories.email_repository import create_all_emails
 from repositories.password_repository import add_or_create_all_passwords
-from schemas.breach_data import BreachDataCreate
 from schemas.breaches import BreachCreate
 
 

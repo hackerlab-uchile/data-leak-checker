@@ -3,6 +3,7 @@ from models.breach_data import BreachData
 from models.breaches import Breach
 from models.data_leaks import DataLeak
 from models.data_types import DataType
+from models.passwords import Password
 from sqlalchemy_utils import create_database, database_exists
 
 if not database_exists(engine.url):
