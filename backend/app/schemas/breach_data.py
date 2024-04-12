@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from pydantic import BaseModel, PositiveInt
-from sqlalchemy import Integer
 
 
 class BreachDataBase(BaseModel):

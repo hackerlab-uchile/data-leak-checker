@@ -1,15 +1,15 @@
 from pydantic import BaseModel, PositiveInt
 
 
-class EmailBase(BaseModel):
-    value: str
+class DataTypeBase(BaseModel):
+    dtype: str
 
 
-class EmailCreate(EmailBase):
+class DataTypeCreate(DataTypeBase):
     pass
 
 
-class Email(EmailBase):
+class DataType(DataTypeBase):
     id: PositiveInt
 
     class Config:
