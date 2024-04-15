@@ -1,4 +1,4 @@
-from models.passwords import Password
+from models.password import Password
 from sqlalchemy.orm import Session
 
 # def get_user(db: Session, user_id: int):

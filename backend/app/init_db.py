@@ -1,9 +1,10 @@
 from core.database import Base, engine, test_engine
+from models.breach import Breach
 from models.breach_data import BreachData
-from models.breaches import Breach
-from models.data_leaks import DataLeak
-from models.data_types import DataType
-from models.passwords import Password
+from models.data_found_with import DataFoundWith
+from models.data_leak import DataLeak
+from models.data_type import DataType
+from models.password import Password
 from sqlalchemy_utils import create_database, database_exists
 
 if not database_exists(engine.url):

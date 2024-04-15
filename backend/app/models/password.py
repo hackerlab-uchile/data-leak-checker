@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Password(Base):
-    __tablename__ = "passwords"
+    __tablename__ = "password"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     hash_password: Mapped[str] = mapped_column(String(64), unique=True)
     count: Mapped[int] = mapped_column(Integer, default=0)

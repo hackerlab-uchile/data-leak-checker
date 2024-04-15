@@ -6,10 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 class BreachData(Base):
     __tablename__ = "breach_data"
     breach_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("breaches.id"), primary_key=True
+        Integer, ForeignKey("breach.id"), primary_key=True
     )
     data_type_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("data_types.id"), primary_key=True
+        Integer, ForeignKey("data_type.id"), primary_key=True
     )
 
     def __repr__(self):

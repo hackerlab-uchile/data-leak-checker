@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class DataType(Base):
-    __tablename__ = "data_types"
+    __tablename__ = "data_type"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     dtype: Mapped[str] = mapped_column(String(50))
 

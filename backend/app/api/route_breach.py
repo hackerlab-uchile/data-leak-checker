@@ -2,12 +2,12 @@ from typing import List
 
 from core.database import get_db
 from fastapi import APIRouter, Depends
-from models.breaches import Breach
-from models.data_leaks import DataLeak
+from models.breach import Breach
+from models.data_leak import DataLeak
 from repositories import breach_repository
 from schemas.breaches import Breach as BreachSchema
 from schemas.breaches import BreachCreate
-from schemas.data_leaks import DataLeakBase
+from schemas.data_leak import DataLeakBase
 from sqlalchemy.orm import Session
 
 router = APIRouter()

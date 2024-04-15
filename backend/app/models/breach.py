@@ -1,14 +1,14 @@
 from typing import List
 
 from core.database import Base
-from models.data_types import DataType
+from models.data_type import DataType
 from sqlalchemy import Boolean, Date, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 
 class Breach(Base):
-    __tablename__ = "breaches"
+    __tablename__ = "breach"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[str] = mapped_column(String(300))
