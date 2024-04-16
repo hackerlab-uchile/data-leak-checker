@@ -19,9 +19,6 @@ def add_or_create_all_passwords(
             new_passwords[p] += 1
         else:
             new_passwords[p] = 1
-            # instance = Password(hash_password=p, count=1)
-            # db.add(instance)
-            # saved_passwords.append(instance)
     for value, total in new_passwords.items():
         instance = Password(hash_password=value, count=total)
         saved_passwords.append(instance)

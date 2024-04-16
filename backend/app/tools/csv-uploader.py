@@ -11,13 +11,10 @@ from core.database import get_db
 from models.breach import Breach
 from models.data_leak import DataLeak
 from models.data_type import DataType
-from repositories.breach_repository import create_breach
 from repositories.data_type_repository import (
     get_all_data_types,
     get_all_data_types_in_name_list,
-    get_data_type_by_name,
     get_only_key_types,
-    save_breach_data,
 )
 from repositories.password_repository import add_or_create_all_passwords
 from schemas.breaches import BreachCreate
@@ -76,9 +73,6 @@ def handle_csv_file(f_path: str):
     return data
 
 
-def handle_json_file(f_path: str): ...
-
-
 def valid_upload_file(data: dict) -> bool:
     breach = data.get("breach")
     error_msg = ""
@@ -112,6 +106,9 @@ def handle_upload_file(f_path: str):
         display_data(data_leak)
         return upload_data, data_leak
     return None, None
+
+
+def save_passwords(pass_list: list[str]): ...
 
 
 def found_or_not_with(x: str | float):
@@ -206,10 +203,10 @@ def get_value_model(
     return dl
 
 
-def manage_using_pandas(upload_data, data_leak):
-    df = pd.DataFrame(data_leak, columns=data_leak.keys(), dtype="str")
-
-    session = get_db().__next__()
+def save_breach_info(
+    session: Session, upload_data: dict, data_types_breached: list[str]
+) -> Breach:
+    # 1. Estructuramos el breach
     breach = {
         "name": upload_data["breach"],
         "description": upload_data["description"],
@@ -217,26 +214,28 @@ def manage_using_pandas(upload_data, data_leak):
         "confirmed": True,
         "is_sensitive": True,
     }
+    # 2. Se crea el modelo Breach
     breach_scheme_to_create = BreachCreate(**breach)
-    # 1. Guardamos el Breach y la data asociada (breached_data_types)
-    print(breach_scheme_to_create.model_dump())
     breach_to_create = Breach(**breach_scheme_to_create.model_dump())
+    # 3. Agregamos al modelo el tipo de datos que se encontraron
     breached_data_types = get_all_data_types_in_name_list(
-        db=session, names=list(data_leak.keys())
+        db=session, names=list(data_types_breached)
     )
     breach_to_create.data_breached = breached_data_types
-    session.add(breach_to_create)  # Guardamos el breach
+    # 4. Guardamos el breach
+    session.add(breach_to_create)
     session.flush()
+    return breach_to_create
 
-    values_to_add = data_cleanup(df, session, breach=breach_to_create)
 
+def manage_using_pandas(upload_data, data_leak):
+    session = get_db().__next__()
+    breach_created = save_breach_info(session, upload_data, data_leak.keys())
+
+    df = pd.DataFrame(data_leak, columns=data_leak.keys(), dtype="str")
+    values_to_add = data_cleanup(df, session, breach=breach_created)
     session.add_all(values_to_add)
-
     session.commit()
-
-    # if "password" in data_leak.keys():
-    #     # add_or_create_all_passwords(db=session, list_passwords=data_leak["password"])
-    #     pass
 
 
 # Define custom aggregation function
@@ -256,130 +255,17 @@ def aggregate_non_null(series):
     else:
         return non_null_values.iloc[0]
 
-    # # df_unique.sort_values(list(data_leak.keys()), inplace=True, ascending=True)
-    # merged_df = (
-    #     df.groupby("email").agg(lambda x: x.max() if x.max() else x.min()).reset_index()
-    # )
-    # print(merged_df.head())
-    # # print(df_unique.head())
-    # for i, col in enumerate(set(["email", "phone", "rut"]) & set(df.columns)):
-    #     if col in df.columns:
-    #         continue
-    #     merged_df = (
-    #         df.groupby("email")
-    #         .agg(lambda x: x.max() if x.max() else x.min())
-    #         .reset_index()
-    #     )
-    #     # all_values = [for ]
-
 
 def main():
     if not valid_params():
         return
     f_type = sys.argv[1].lower()
     f_path = sys.argv[2].lower()
-    if f_type == "csv":
-        handle_csv_file(f_path)
-    elif f_type == "json":
-        handle_json_file(f_path)
-    elif f_type == "upload":
+    if f_type == "upload":
         upload_data, data_leak = handle_upload_file(f_path)
         if upload_data is None or data_leak is None:
             return 1
         manage_using_pandas(upload_data, data_leak)
-        # # Obtenemos acceso a la db
-        # session = get_db().__next__()
-        # breach = {
-        #     "name": upload_data["breach"],
-        #     "description": upload_data["description"],
-        #     "breach_date": datetime.strptime(upload_data["breach_date"], "%Y-%m-%d"),
-        #     "confirmed": True,
-        #     "is_sensitive": True,
-        # }
-        # breach_scheme_to_create = BreachCreate(**breach)
-        # # 1. Guardamos el Breach y la data asociada (breached_data_types)
-        # breach_to_create = Breach(**breach_scheme_to_create.model_dump())
-        # breached_data_types = get_all_data_types_in_name_list(
-        #     db=session, names=list(data_leak.keys())
-        # )
-        # breach_to_create.data_breached = breached_data_types
-        # session.add(breach_to_create)  # Guardamos el breach
-
-        # to_store_data_types = ["email", "phone", "rut"]
-
-        # for col, items in data_leak.items():
-        #     if col != "email":
-        #         continue
-        #     # 2. Guardamos la info encontrada con el breach (nombre de columnas)
-        #     column_data_type = get_all_data_types_in_name_list(db=session, names=col)
-        #     if column_data_type is None:
-        #         print(f"Error: Column with name {col} is not a valid data type!")
-        #         continue
-        #     breach_data_to_create = {
-        #         "breach_id": created_breach.id,
-        #         "data_type_id": column_data_type.id,
-        #     }
-        #     created_breach_data = save_breach_data(db=session, **breach_data_to_create)
-        #     # 3. Guardar {Dato}. Revisar si ya existe o no
-        #     model = Email
-        #     model_leak = EmailLeak
-        #     leak_data_name = "email_id"
-        #     match column_data_type.dtype:
-        #         case "email":
-        #             created_emails = create_all_emails(session, email_list=set(items))
-        #             print("Se crearon un total de", len(created_emails), "correos.")
-        #             continue
-        #         case "phone":
-        #             model = Phone
-        #             model_leak = PhoneLeak
-        #             leak_data_name = "phone_id"
-        #         case "rut":
-        #             model = Rut
-        #             model_leak = RutLeak
-        #             leak_data_name = "rut_id"
-        #         case "password":
-        #             passwords_created = add_or_create_all_passwords(
-        #                 session, list_passwords=items
-        #             )
-        #             print(
-        #                 "Se crearon un total de", len(passwords_created), "contraseñas."
-        #             )
-        #             continue
-        #         case _:
-        #             continue
-
-        # for i, item in enumerate(items):
-        # if item == "":  # or no tiene forma de Email
-        #     continue
-        #     # a. Check if already exists
-        #     # a2. If doesnt exist -> save it
-        #     # a3. else -> get it
-        #     data = get_or_create(session, model, value=item)
-        #     for other_data in data_leak.keys():
-        #         if other_data == col:
-        #             continue
-        #         column_data_type = get_data_type_by_name(
-        #             db=session, name=other_data
-        #         )
-        #         if column_data_type is None:
-        #             print(
-        #                 f"Error: Column with name {other_data} is not a valid data type!"
-        #             )
-        #             continue
-        #         data_leak_created = get_or_create(
-        #             db=session,
-        #             model=model_leak,
-        #             breach_id=created_breach.id,
-        #             data_type_id=column_data_type.id,
-        #             **{leak_data_name: data.id},
-        #         )
-        # session.commit()
-
-        # TODO: Guardamos los nuevos datos en su tabla (ej. Email), (si es que no existen ya)
-        # TODO: Guardamos la relación de los datos con el breaach (ej. EmailLeak)
-        # TODO: Guardamos la relación de los datos con el breaach y con los datos que se encontró (ej. EmailLeak)
-        # TODO: Guardamos el hash en contraseñas
-        # print(created_breach)
 
 
 if __name__ == "__main__":
