@@ -30,10 +30,17 @@ data_checkers = [
         ],
         sanitize_func=lambda x: re.sub(r"\D", "", x),
     ),
+    DataChecker(
+        DataType.DATE,
+        regex_list=[
+            r"^(\d){4}[^\n](\d){2}(\d){2}$",
+            r"^(\d){2}[^\n]{1}(\d){2}[^\n]{1}(\d){4}$",
+        ],
+    ),
 ]
 
 
-def identify_data_type(sample: pd.DataFrame) -> tuple[DataType, dict[DataType, list]]:
+def identify_data_type(sample: pd.Series) -> tuple[DataType, dict[DataType, list]]:
     sorted_data: dict[DataType, list[str]] = {dc.dtype: [] for dc in data_checkers}
     results = {dc.dtype: 0 for dc in data_checkers}
 
@@ -56,23 +63,22 @@ def identify_data_type(sample: pd.DataFrame) -> tuple[DataType, dict[DataType, l
     return max(results, key=results.get), sorted_data  # type: ignore
 
 
-def main():
-    # 0. Separarlo por mi cuenta y dps pasarselo a Pandas
-    # 1. Pasar datos a un DataFrame de Pandas
-    df = pd.read_table(
-        sys.argv[1],
-        engine="python",
-        dtype=str,
-        header=None,
-        names=["col1", "col2", "col3"],
-        delimiter=r"\:{1}",
-        usecols=range(2),
-    )
-    sample = df
-    total_rows = len(sample)
+def get_file_info(delimiter=":") -> pd.DataFrame:
+    with open(sys.argv[1], "r") as f:
+        all_lines = f.read().strip().split("\n")
+    n_cols = len(all_lines[0].split(delimiter))
+    d: dict[str, list] = {f"col{i+1}": [] for i in range(n_cols)}
+    for line in all_lines:
+        for i, data in enumerate(line.split(delimiter, maxsplit=n_cols - 1)):
+            d[f"col{i+1}"].append(data.strip())
+    return pd.DataFrame(data=d)
+
+
+def analyze_data(df: pd.DataFrame):
+    total_rows = len(df)
     for col in range(len(df.columns)):
         #   2. Identificar qué tipos de datos contiene
-        data_type, results = identify_data_type(sample.iloc[:, col])
+        data_type, results = identify_data_type(df.iloc[:, col])
         print(f"Column {col} -> {data_type}")
         for dtype in DataType:
             n_r = len(results[dtype])
@@ -81,7 +87,12 @@ def main():
             print(f"{DataType.RUT}: {results[DataType.RUT][:5]}")
         if col == 1:
             print(f"{DataType.CREDIT_CARD}: {results[DataType.CREDIT_CARD][:15]}")
-    print("----------")
+
+
+def main():
+    # 0. Separarlo por mi cuenta y dps pasarselo a Pandas
+    df = get_file_info()
+    analyze_data(df)
 
 
 if __name__ == "__main__":

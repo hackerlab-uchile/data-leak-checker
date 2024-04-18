@@ -10,6 +10,7 @@ class DataType(Enum):
     HASH = "hash"
     IP_ADDR = "ip_address"
     CREDIT_CARD = "credit_card"
+    DATE = "date"
     STRING = "string"
 
 

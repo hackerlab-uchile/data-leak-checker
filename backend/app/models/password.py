@@ -10,4 +10,4 @@ class Password(Base):
     count: Mapped[int] = mapped_column(Integer, default=0)
 
     def __repr__(self):
-        return f"Password(id={self.id}, hash_password={self.hash_password})"
+        return f"Password(id={self.id}, hash_password={self.hash_password}, count={self.count})"

@@ -1,9 +1,9 @@
-import enum
 import json
 import os
 import sys
 from datetime import datetime
 from hashlib import sha256
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -11,6 +11,7 @@ from core.database import get_db
 from models.breach import Breach
 from models.data_leak import DataLeak
 from models.data_type import DataType
+from models.password import Password
 from repositories.data_type_repository import (
     get_all_data_types,
     get_all_data_types_in_name_list,
@@ -96,7 +97,7 @@ def valid_upload_file(data: dict) -> bool:
     return error_msg == ""
 
 
-def handle_upload_file(f_path: str):
+def handle_upload_file(f_path: str) -> tuple[Any, Any]:
     with open(f_path, "r") as file:
         upload_data = json.load(file)
 
@@ -108,7 +109,16 @@ def handle_upload_file(f_path: str):
     return None, None
 
 
-def save_passwords(pass_list: list[str]): ...
+def save_passwords(db: Session, pass_list: list[str]):
+    hash_list = list(map(lambda x: sha256(x.encode("UTF-8")).hexdigest(), pass_list))
+    pass_count = {}
+    for p in hash_list:
+        if pass_count.get(p):
+            pass_count[p] += 1
+        else:
+            pass_count[p] = 1
+    model_list = [Password(hash_password=p, count=c) for p, c in pass_count.items()]
+    add_or_create_all_passwords(db, model_list)
 
 
 def found_or_not_with(x: str | float):
@@ -117,7 +127,6 @@ def found_or_not_with(x: str | float):
     return x != np.nan
 
 
-# def data_cleanup(df: pd.DataFrame, session: Session) -> list[DataLeak]:
 def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[DataLeak]:
     all_types = get_all_data_types(db=session)
     types_by_name: dict[str, DataType] = {
@@ -125,6 +134,7 @@ def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[Dat
     }
 
     all_values_to_add: list[DataLeak] = []
+    print("Preparing data...")
     for dtype in get_only_key_types(
         db=session
     ):  # Iteramos por cada 'llave' (email, phone, rut)
@@ -132,49 +142,12 @@ def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[Dat
             continue
         # 1. Hacemos un merge de las filas repetidas que le falten datos
         df.replace("", np.nan, inplace=True)
-        print("--- Cuáles son nulos?")
-        print(df.loc[df["password"].isna()])
-        print("---")
-        tidy_df = df.groupby(dtype.dtype).agg(aggregate_non_null).reset_index()
-        print("--- Ejemplo de que debería ser todavía nulo?")
-        print(tidy_df.loc[tidy_df["email"] == "paola@ventancor.com.ar"])
-        print("---")
+        tidy_df = df.groupby(dtype.dtype).agg(aggregate_non_null).reset_index()  # type: ignore
 
         # 2. Obtenemos todas las columnas, excepto la de la llave
-        # df_current = tidy_df.loc[:, tidy_df.columns != dtype.dtype]
-        # tidy_df.loc[:, tidy_df.columns != dtype.dtype] = tidy_df.loc[
-        #     :, tidy_df.columns != dtype.dtype
-        # ].apply(found_or_not_with, axis=1)
         tidy_df.loc[:, tidy_df.columns != dtype.dtype] = ~tidy_df.loc[
             :, tidy_df.columns != dtype.dtype
         ].isnull()
-        print("--- DF Current")
-        # print(df_current.head())
-        print(tidy_df.head())
-        print("---")
-
-        # 3. Traformamos cada columna en True si existe o en False si es np.nan
-        # new_df = df_current.apply(found_or_not_with, axis=1)
-
-        # for col in df_current.columns:  # Transformamos cada columna a True or False
-        #     new_df = pd.concat(
-        #         [new_df, df_current[col].apply(found_or_not_with)], axis=1
-        #     )
-
-        # df_proc = pd.concat(
-        #     [tidy_df.loc[:, tidy_df.columns == dtype.dtype], new_df], axis=1
-        # )
-        df_proc2 = tidy_df.groupby(["email"]).first()
-        print("--- Agrupamos por email!")
-        print(df_proc2.head())
-        print("---")
-        print("Alguno Falso?:")
-        # print(df_proc.loc[df_proc["password"] == "False"].head())
-        print(tidy_df["password"].unique())
-        print("---")
-        print("--- Ejemplo de que debería ser todavía nulo?")
-        print(tidy_df.loc[tidy_df["email"] == "paola@ventancor.com.ar"])
-        print("---")
 
         data_dic_list: list = tidy_df.to_dict("records")
         all_values = map(
@@ -206,6 +179,7 @@ def get_value_model(
 def save_breach_info(
     session: Session, upload_data: dict, data_types_breached: list[str]
 ) -> Breach:
+    """Save all info related to a Breach"""
     # 1. Estructuramos el breach
     breach = {
         "name": upload_data["breach"],
@@ -229,22 +203,21 @@ def save_breach_info(
 
 
 def manage_using_pandas(upload_data, data_leak):
+    """Manage a data leak upload using pandas"""
+    # Get database session
     session = get_db().__next__()
+    # Save Data Breach Info
     breach_created = save_breach_info(session, upload_data, data_leak.keys())
-
     df = pd.DataFrame(data_leak, columns=data_leak.keys(), dtype="str")
+    # Add key values to DataLeak table
     values_to_add = data_cleanup(df, session, breach=breach_created)
     session.add_all(values_to_add)
+    # If there are passwords, then we add them to the count
+    if "password" in df.columns:
+        pass_list = list(df["password"].dropna())
+        save_passwords(db=session, pass_list=pass_list)
+    # Commit database changes
     session.commit()
-
-
-# Define custom aggregation function
-def aggregate_non_false(series):
-    non_null_values = series.apply(found_or_not_with)
-    if non_null_values.empty:
-        return np.nan
-    else:
-        return non_null_values.iloc[0]
 
 
 # Define custom aggregation function

@@ -1,54 +1,27 @@
 from models.password import Password
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-
-# def get_user(db: Session, user_id: int):
-#     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
 def add_or_create_all_passwords(
-    db: Session, list_passwords: list[str]
+    db: Session, list_passwords: list[Password]
 ) -> list[Password]:
     saved_passwords = []
-    new_passwords: dict[str, int] = {}
-    for p in list_passwords:
-        instance = db.query(Password).filter_by(hash_password=p).one_or_none()
-        if instance:
-            # Add +1 to counter
-            setattr(instance, "count", instance.count + 1)
-        elif new_passwords.get(p):
-            new_passwords[p] += 1
-        else:
-            new_passwords[p] = 1
-    for value, total in new_passwords.items():
-        instance = Password(hash_password=value, count=total)
-        saved_passwords.append(instance)
+    # Construct the SQL statement
+    chunk_size = 20000
+    for i in range(0, len(list_passwords), chunk_size):
+        insert_stmt = insert(Password).values(
+            [
+                {"hash_password": item.hash_password, "count": item.count}
+                for item in list_passwords[i : i + chunk_size]
+            ]
+        )
+        do_update_stmt = insert_stmt.on_conflict_do_update(
+            index_elements=["hash_password"],
+            set_=dict(count=Password.__table__.c.count + insert_stmt.excluded.count),
+        )
+        # Execute the statement
+        db.execute(do_update_stmt)
+        db.flush()
 
-    db.add_all(saved_passwords)
-    db.commit()
     return saved_passwords
-
-
-# def add_or_create_all_passwords(
-#     db: Session, list_passwords: list[str]
-# ) -> list[Password]:
-#     saved_passwords = []
-#     new_passwords: dict[str, int] = {}
-#     for p in list_passwords:
-#         instance = db.query(Password).filter_by(hash_password=p).one_or_none()
-#         if instance:
-#             # Add +1 to counter
-#             setattr(instance, "count", instance.count + 1)
-#         elif new_passwords.get(p):
-#             new_passwords[p] += 1
-#         else:
-#             new_passwords[p] = 1
-#             # instance = Password(hash_password=p, count=1)
-#             # db.add(instance)
-#             # saved_passwords.append(instance)
-#     for value, total in new_passwords.items():
-#         instance = Password(hash_password=value, count=total)
-#         saved_passwords.append(instance)
-
-#     db.add_all(saved_passwords)
-#     db.commit()
-#     return saved_passwords
