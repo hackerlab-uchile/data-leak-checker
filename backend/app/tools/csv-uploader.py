@@ -13,9 +13,7 @@ from models.data_leak import DataLeak
 from models.data_type import DataType
 from models.password import Password
 from repositories.data_type_repository import (
-    get_all_data_types,
     get_all_data_types_in_name_list,
-    get_only_key_types,
 )
 from repositories.password_repository import add_or_create_all_passwords
 from schemas.breaches import BreachCreate
@@ -128,30 +126,24 @@ def found_or_not_with(x: str | float):
 
 
 def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[DataLeak]:
-    all_types = get_all_data_types(db=session)
-    types_by_name: dict[str, DataType] = {
-        data_type.dtype: data_type for data_type in all_types
-    }
-
     all_values_to_add: list[DataLeak] = []
     print("Preparing data...")
-    for dtype in get_only_key_types(
-        db=session
-    ):  # Iteramos por cada 'llave' (email, phone, rut)
-        if dtype.dtype not in df.columns:  # Si la llave NO existe, la saltamos
+    # Iteramos por cada 'llave' (email, phone, rut)
+    for dtype in DataType.get_key_types():
+        if dtype.value not in df.columns:  # Si la llave NO existe, la saltamos
             continue
         # 1. Hacemos un merge de las filas repetidas que le falten datos
         df.replace("", np.nan, inplace=True)
         tidy_df = df.groupby(dtype.dtype).agg(aggregate_non_null).reset_index()  # type: ignore
 
         # 2. Obtenemos todas las columnas, excepto la de la llave
-        tidy_df.loc[:, tidy_df.columns != dtype.dtype] = ~tidy_df.loc[
-            :, tidy_df.columns != dtype.dtype
+        tidy_df.loc[:, tidy_df.columns != dtype.value] = ~tidy_df.loc[
+            :, tidy_df.columns != dtype.value
         ].isnull()
 
         data_dic_list: list = tidy_df.to_dict("records")
         all_values = map(
-            lambda x: get_value_model(dtype, x, types_by_name, breach),
+            lambda x: get_value_model(dtype, x, breach),
             data_dic_list,
         )
         all_values_to_add += all_values
@@ -159,20 +151,17 @@ def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[Dat
     return all_values_to_add
 
 
-def get_value_model(
-    key_type: DataType, d: dict, types_by_name: dict, breach: Breach
-) -> DataLeak:
-    value = d.get(key_type.dtype)
+def get_value_model(key_type: DataType, d: dict, breach: Breach) -> DataLeak:
+    value = d.get(key_type.value)
     hash_value = sha256(value.encode("UTF-8")).hexdigest()  # type: ignore
-    # dl = DataLeak(hash_value=d.get(key_type.dtype))
     dl = DataLeak(hash_value=hash_value)
-    dl.data_type = key_type
+    dl.data_type = key_type.value
     dl.breach_found = breach
-    found_with = []
+    found_with: set = set()
     for k, v in d.items():
         if v is True:
-            found_with.append(types_by_name.get(k))
-    dl.found_with = found_with
+            found_with.add(DataType.from_str(k).value)
+    dl.found_with = list(found_with)
     return dl
 
 
@@ -193,7 +182,7 @@ def save_breach_info(
     breach_to_create = Breach(**breach_scheme_to_create.model_dump())
     # 3. Agregamos al modelo el tipo de datos que se encontraron
     breached_data_types = get_all_data_types_in_name_list(
-        db=session, names=list(data_types_breached)
+        names=list(data_types_breached)
     )
     breach_to_create.data_breached = breached_data_types
     # 4. Guardamos el breach
