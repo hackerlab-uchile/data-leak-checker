@@ -2,7 +2,7 @@ from pydantic import BaseModel, PositiveInt
 
 
 class DataTypeBase(BaseModel):
-    dtype: str
+    name: str
 
 
 class DataTypeCreate(DataTypeBase):

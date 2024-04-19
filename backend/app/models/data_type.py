@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 class DataType(Base):
     __tablename__ = "data_type"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    dtype: Mapped[str] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(50))
 
     def __repr__(self):
-        return f"DataType(id={self.id}, dtype={self.dtype})"
+        return f"DataType(id={self.id}, name={self.name})"

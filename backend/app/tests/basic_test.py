@@ -2,7 +2,6 @@ import pytest
 from core.database import Base, get_db, get_test_db, test_engine
 from fastapi.testclient import TestClient
 from main import app
-from models.emails import Email
 
 
 @pytest.fixture

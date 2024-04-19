@@ -130,7 +130,7 @@ def found_or_not_with(x: str | float):
 def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[DataLeak]:
     all_types = get_all_data_types(db=session)
     types_by_name: dict[str, DataType] = {
-        data_type.dtype: data_type for data_type in all_types
+        data_type.name: data_type for data_type in all_types
     }
 
     all_values_to_add: list[DataLeak] = []
@@ -138,15 +138,15 @@ def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[Dat
     for dtype in get_only_key_types(
         db=session
     ):  # Iteramos por cada 'llave' (email, phone, rut)
-        if dtype.dtype not in df.columns:  # Si la llave NO existe, la saltamos
+        if dtype.name not in df.columns:  # Si la llave NO existe, la saltamos
             continue
         # 1. Hacemos un merge de las filas repetidas que le falten datos
         df.replace("", np.nan, inplace=True)
-        tidy_df = df.groupby(dtype.dtype).agg(aggregate_non_null).reset_index()  # type: ignore
+        tidy_df = df.groupby(dtype.name).agg(aggregate_non_null).reset_index()  # type: ignore
 
         # 2. Obtenemos todas las columnas, excepto la de la llave
-        tidy_df.loc[:, tidy_df.columns != dtype.dtype] = ~tidy_df.loc[
-            :, tidy_df.columns != dtype.dtype
+        tidy_df.loc[:, tidy_df.columns != dtype.name] = ~tidy_df.loc[
+            :, tidy_df.columns != dtype.name
         ].isnull()
 
         data_dic_list: list = tidy_df.to_dict("records")
@@ -162,7 +162,7 @@ def data_cleanup(df: pd.DataFrame, session: Session, breach: Breach) -> list[Dat
 def get_value_model(
     key_type: DataType, d: dict, types_by_name: dict, breach: Breach
 ) -> DataLeak:
-    value = d.get(key_type.dtype)
+    value = d.get(key_type.name)
     hash_value = sha256(value.encode("UTF-8")).hexdigest()  # type: ignore
     # dl = DataLeak(hash_value=d.get(key_type.dtype))
     dl = DataLeak(hash_value=hash_value)
