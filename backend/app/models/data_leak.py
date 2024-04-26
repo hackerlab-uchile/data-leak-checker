@@ -29,5 +29,17 @@ class DataLeak(Base):
     breach_found: Mapped["Breach"] = relationship("Breach", foreign_keys=[breach_id])
     found_with: Mapped[List["DataType"]] = relationship(secondary="data_found_with")
 
+    @property
+    def data_type_display(self) -> str:
+        if self.data_type:
+            return self.data_type.name
+        return ""
+
+    @property
+    def found_with_display(self) -> list[str]:
+        if self.found_with:
+            return list(map(lambda x: x.name, self.found_with))
+        return []
+
     def __repr__(self):
         return f"DataLeak(id={self.id}, hash_value={self.hash_value}, data_type={self.data_type}, breach_found={self.breach_found}, found_with={self.found_with})"

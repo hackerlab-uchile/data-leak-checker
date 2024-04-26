@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import List
 
 from pydantic import BaseModel, PositiveInt
 
@@ -20,4 +21,12 @@ class Breach(BreachBase):
     created_at: datetime
 
     class Config:
-        orm_model = True
+        orm_mode = True
+
+
+class BreachShow(BreachBase):
+    created_at: datetime
+    data_types: List[str]
+
+    class Config:
+        orm_mode = True

@@ -19,5 +19,22 @@ class Breach(Base):
 
     data_breached: Mapped[List["DataType"]] = relationship(secondary="breach_data")
 
+    @property
+    def data_types(self) -> list[str]:
+        if self.data_breached:
+            return list(map(lambda x: x.name, self.data_breached))
+        return []
+
+    # def __repr__(self):
+    #     return f"Breach(id={self.id}, name={self.name}, description={self.description[:10]}[...], breach_date={self.breach_date}), data_breached={self.data_breached}"
     def __repr__(self):
-        return f"Breach(id={self.id}, name={self.name}, description={self.description[:10]}[...], breach_date={self.breach_date}), data_breached={self.data_breached}"
+        return "Breach(id={}, name={}, description={}, breach_date={}, confirmed={}, is_sensitive={}, created_at={}, data_breached={})".format(
+            self.id,
+            self.name,
+            self.description,
+            self.breach_date,
+            self.confirmed,
+            self.is_sensitive,
+            self.created_at,
+            self.data_breached,
+        )

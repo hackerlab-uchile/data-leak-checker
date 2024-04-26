@@ -7,6 +7,7 @@ export enum QueryType {
   Phone,
 }
 
+// TODO: Change Promise for DataLeak Interface
 export async function getBreachesByQueryType(
   query: string,
   type: QueryType
