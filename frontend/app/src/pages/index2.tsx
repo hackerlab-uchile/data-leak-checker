@@ -13,15 +13,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
 import CryptoJS from "crypto-js";
-import { FormEvent, Suspense, useState } from "react";
-import { Breach } from "@/models/Breach";
-import { getBreachesByQueryType, QueryType } from "@/api/api";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { Breach, DataLeak } from "@/models/Breach";
+import { getDataLeaksByValueAndType, QueryType } from "@/api/api";
 import { MdError } from "react-icons/md";
+import { IoMdInformationCircle } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { IconContext } from "react-icons";
 import { PiShieldWarningFill } from "react-icons/pi";
+import { LeaksTable } from "@/components/breaches/leaks-table";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  TypesLeak,
+  getLeakTableColumns,
+  getLeakTableRows,
+} from "@/components/breaches/columns";
 
 const redColor = "#ED342F";
 
@@ -31,20 +39,33 @@ export default function Home2() {
   const [responseReceived, setResponseReceived] = useState(false);
   const [searchRut, setSearchRut] = useState("");
   const [searchPhone, setSearchPhone] = useState("");
-  const [breaches, setBreaches] = useState<Array<Breach>>([]);
+  const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
+  const [allDataFound, setAllDataFound] = useState<Array<string>>([]);
+  const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
+  const [tableData, setTableData] = useState<TypesLeak[]>([]);
 
   async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchEmail) {
-      const emailQuery = CryptoJS.SHA256(searchEmail).toString(
-        CryptoJS.enc.Hex
-      );
+      const emailQuery = searchEmail.trim();
       console.log(emailQuery);
-      const breachesList: Breach[] = await getBreachesByQueryType(
+      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         emailQuery,
         QueryType.Email
       );
-      setBreaches(breachesList);
+      setDataLeaks(dataLeaksList);
+      let dataFound: string[] = dataLeaksList.reduce(
+        (result: string[], current: DataLeak) =>
+          [...result].concat(current.found_with),
+        []
+      );
+      setAllDataFound(
+        dataFound.filter(function (elem, index, self) {
+          return index === self.indexOf(elem);
+        })
+      );
+      console.log(allDataFound);
+      console.log(dataLeaks);
       setResponseReceived(true);
     }
   }
@@ -52,12 +73,13 @@ export default function Home2() {
   async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchRut) {
-      const rutQuery = CryptoJS.SHA256(searchRut).toString(CryptoJS.enc.Hex);
-      const breachesList: Breach[] = await getBreachesByQueryType(
+      // TODO: Remove '.' and '-' symbols
+      const rutQuery = searchRut.trim();
+      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         rutQuery,
         QueryType.Rut
       );
-      setBreaches(breachesList);
+      setDataLeaks(dataLeaksList);
       setResponseReceived(true);
     }
   }
@@ -65,17 +87,20 @@ export default function Home2() {
   async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchPhone) {
-      const phoneQuery = CryptoJS.SHA256(searchPhone).toString(
-        CryptoJS.enc.Hex
-      );
-      const breachesList: Breach[] = await getBreachesByQueryType(
+      const phoneQuery = searchPhone.trim();
+      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         phoneQuery,
         QueryType.Phone
       );
-      setBreaches(breachesList);
+      setDataLeaks(dataLeaksList);
       setResponseReceived(true);
     }
   }
+
+  useEffect(() => {
+    setColumns(getLeakTableColumns(dataLeaks));
+    setTableData(getLeakTableRows(dataLeaks));
+  }, [allDataFound, dataLeaks]);
 
   const searchKeys = [
     {
@@ -176,17 +201,23 @@ export default function Home2() {
               {responseReceived ? (
                 <div className="flex flex-col mt-5 w-full items-center justify-start">
                   <div className="flex flex-col w-full self-start justifiy-start items-center">
-                    {breaches.length > 0 ? (
-                      <IconContext.Provider value={{ color: `${redColor}` }}>
-                        <PiShieldWarningFill
-                          fontSize="3.5em"
-                          className="self-center"
-                        />
-                        <AlertMessage
-                          boxColor="bg-red-hackerlab"
-                          message={`¡Este correo ha sido visto en ${breaches.length} filtraciones de nuestro conocimiento!`}
-                        />
-                      </IconContext.Provider>
+                    {dataLeaks.length > 0 ? (
+                      <>
+                        <IconContext.Provider value={{ color: `${redColor}` }}>
+                          <PiShieldWarningFill
+                            fontSize="3.5em"
+                            className="self-center"
+                          />
+                          <AlertMessage
+                            boxColor="bg-red-hackerlab"
+                            message={`¡Este correo ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
+                          />
+                        </IconContext.Provider>
+                        {/* <div className="container mx-auto py-10"> */}
+                        <div className="w-full mx-auto py-5">
+                          <LeaksTable columns={columns} data={tableData} />
+                        </div>
+                      </>
                     ) : (
                       <IconContext.Provider value={{ color: "green" }}>
                         <FaCheckCircle
@@ -201,8 +232,12 @@ export default function Home2() {
                       </IconContext.Provider>
                     )}
                   </div>
-                  {breaches.map((breach) => (
-                    <BreachCard key={breach.id} breach={breach} />
+                  {dataLeaks.map((dLeak, index) => (
+                    <BreachCard
+                      key={index}
+                      breach={dLeak.breach}
+                      index={index}
+                    />
                   ))}
                 </div>
               ) : (
@@ -219,9 +254,12 @@ export default function Home2() {
   );
 }
 
-function BreachCard({ breach }: { breach: Breach }) {
+function BreachCard({ breach, index }: { breach: Breach; index: number }) {
   return (
-    <div className="flex flex-col items-start my-1 p-4 border rounded-lg w-full">
+    <div
+      id={`${index}`}
+      className="flex flex-col items-start my-1 p-4 border rounded-lg w-full"
+    >
       <h4 className="font-bold text-lg">
         {`${breach.name} (${breach.breach_date.slice(0, 4)})`}
       </h4>

@@ -21,8 +21,8 @@ def create_breach(breach: BreachCreate, db: Session = Depends(get_db)):
     return new_breach
 
 
-@router.post("/data/", response_model=List[BreachSchema])
-def get_breachdata(data_leak: DataLeakBase, db: Session = Depends(get_db)):
+@router.post("/deprecated/data/", response_model=List[BreachSchema])
+def get_breachdata_deprecated(data_leak: DataLeakBase, db: Session = Depends(get_db)):
     """Returns information about data breaches related to an email"""
     found_breaches = (
         db.query(Breach)
@@ -32,14 +32,15 @@ def get_breachdata(data_leak: DataLeakBase, db: Session = Depends(get_db)):
     return found_breaches
 
 
-@router.post("/test/data/", response_model=List[DataLeakShow])
-def get_breachdata_test(payload: DataLeakInput, db: Session = Depends(get_db)):
+@router.post("/data/", response_model=List[DataLeakShow])
+def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
     """Returns information about data breaches related to an email"""
     hash_value = sha256(payload.value.encode("UTF-8")).hexdigest()
     dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
     if dtype is None:
         # TODO: Throw error
         # TODO: Se puede hacer una dependency, que entregue el dtype correspondiente
+        # TODO: Cómo se hacía una dependecy? xd
         return []
     found_breaches = (
         db.query(DataLeak)

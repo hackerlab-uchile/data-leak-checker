@@ -9,6 +9,7 @@ export interface Breach {
 }
 
 export interface DataLeak {
+  // data_type: string;
   breach: Breach;
   found_with: string[];
 }
