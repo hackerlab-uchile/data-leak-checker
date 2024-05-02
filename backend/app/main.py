@@ -4,6 +4,7 @@ import init_db
 from api.route_base import api_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from populate_db import populate_dummy_data
 
 
 def init_app():
@@ -27,3 +28,5 @@ def init_app():
 
 
 app = init_app()
+
+populate_dummy_data()

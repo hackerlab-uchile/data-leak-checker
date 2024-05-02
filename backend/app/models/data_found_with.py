@@ -13,4 +13,4 @@ class DataFoundWith(Base):
     )
 
     def __repr__(self):
-        return f"FoundWith(={self.data_leak_id}, data_type_id={self.data_type_id})"
+        return f"FoundWith(data_leak_id={self.data_leak_id}, data_type_id={self.data_type_id})"

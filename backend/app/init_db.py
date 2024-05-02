@@ -5,6 +5,7 @@ from models.data_found_with import DataFoundWith
 from models.data_leak import DataLeak
 from models.data_type import DataType
 from models.password import Password
+from models.security_tip import SecurityTip
 from sqlalchemy_utils import create_database, database_exists
 
 if not database_exists(engine.url):
