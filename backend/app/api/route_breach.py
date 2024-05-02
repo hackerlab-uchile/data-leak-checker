@@ -10,6 +10,7 @@ from repositories import breach_repository
 from schemas.breaches import Breach as BreachSchema
 from schemas.breaches import BreachCreate
 from schemas.data_leak import DataLeakBase, DataLeakInput, DataLeakShow
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -47,5 +48,6 @@ def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
         .join(Breach, Breach.id == DataLeak.breach_id)
         .filter(DataLeak.hash_value == hash_value)
         .filter(DataLeak.data_type_id == dtype.id)
+        .order_by(desc(Breach.breach_date))
     ).all()
     return found_breaches
