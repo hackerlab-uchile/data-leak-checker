@@ -15,18 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { LuSearchX } from "react-icons/lu";
 import { TbShieldExclamation } from "react-icons/tb";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  queried_type: string;
 }
 
 export function LeaksTable<TData, TValue>({
   columns,
   data,
+  queried_type,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -36,6 +37,7 @@ export function LeaksTable<TData, TValue>({
 
   return (
     <div>
+      <h2 className="text-center font-bold">DATOS COMPROMETIDOS</h2>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -90,7 +92,7 @@ export function LeaksTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="py-3 flex flex-row justify-evenly ">
+      <div className="py-3 grid grid-cols-4 justify-items-center">
         <p className="text-sm flex flex-row items-center">
           <TbShieldExclamation
             fontSize="1.5em"
@@ -99,10 +101,26 @@ export function LeaksTable<TData, TValue>({
           ></TbShieldExclamation>
           : Encontrado en la filtración
         </p>
-        <p className="text-sm flex flex-row">
-          <LuSearchX fontSize="1.5em" color="gray"></LuSearchX>: No visto en la
-          filtración
+        <p className="text-sm flex flex-row items-center">
+          - : Dato no filtrado
         </p>
+        <div className="col-span-2 text-sm flex flex-row items-center">
+          <p className="flex flex-row">
+            <LuSearchX
+              className="shrink-0"
+              fontSize="1.5em"
+              color="gray"
+            ></LuSearchX>
+            :
+          </p>
+          <p className="ml-2">
+            No visto junto al {queried_type.toLowerCase()} consultado. Sin
+            embargo, esto puede significar que no lo hayamos visto, pero
+            igualmente se haya visto filtrado.
+            {/* No visto junto al {queried_type.toLowerCase()} consultado. Sin
+            embargo, esto no quiere decir que haya no haya sido filtrado. */}
+          </p>
+        </div>
       </div>
     </div>
   );

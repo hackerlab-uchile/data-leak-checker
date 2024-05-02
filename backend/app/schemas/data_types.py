@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, PositiveInt
 
 
@@ -11,6 +13,13 @@ class DataTypeCreate(DataTypeBase):
 
 class DataType(DataTypeBase):
     id: PositiveInt
+
+    class Config:
+        orm_model = True
+
+
+class DataTypeShow(DataTypeBase):
+    security_tips: List[str]
 
     class Config:
         orm_model = True

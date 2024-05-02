@@ -1,8 +1,8 @@
+from functools import reduce
 from typing import List
 
 from core.database import Base
 from models.breach import Breach
-from models.data_found_with import DataFoundWith
 from models.data_type import DataType
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -32,13 +32,28 @@ class DataLeak(Base):
     @property
     def data_type_display(self) -> str:
         if self.data_type:
-            return self.data_type.name
+            return self.data_type.display_name
         return ""
 
     @property
     def found_with_display(self) -> list[str]:
         if self.found_with:
-            return list(map(lambda x: x.name, self.found_with))
+            return list(map(lambda x: x.display_name, self.found_with))
+        return []
+
+    @property
+    def breach_security_tips(self) -> list[str]:
+        if self.breach_found and len(self.breach_found.data_breached):
+            result = list(
+                reduce(
+                    lambda y, z: y + z,
+                    map(
+                        lambda x: list(map(lambda s: s.description, x.security_tips)),
+                        self.breach_found.data_breached,
+                    ),
+                )
+            )
+            return result
         return []
 
     def __repr__(self):

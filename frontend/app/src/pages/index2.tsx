@@ -12,14 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
-import CryptoJS from "crypto-js";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { Breach, DataLeak } from "@/models/Breach";
 import { getDataLeaksByValueAndType, QueryType } from "@/api/api";
-import { MdError } from "react-icons/md";
-import { IoMdInformationCircle } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
-import Link from "next/link";
+import { MdOutlineSecurity } from "react-icons/md";
+import { AiOutlineSafety } from "react-icons/ai";
 import { useRouter } from "next/router";
 import { IconContext } from "react-icons";
 import { PiShieldWarningFill } from "react-icons/pi";
@@ -40,54 +38,46 @@ export default function Home2() {
   const [searchRut, setSearchRut] = useState("");
   const [searchPhone, setSearchPhone] = useState("");
   const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
-  const [allDataFound, setAllDataFound] = useState<Array<string>>([]);
   const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
 
   async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (searchEmail) {
-      const emailQuery = searchEmail.trim();
-      console.log(emailQuery);
+    const emailQuery = searchEmail.trim();
+    if (emailQuery) {
       const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         emailQuery,
         QueryType.Email
       );
       setDataLeaks(dataLeaksList);
-      let dataFound: string[] = dataLeaksList.reduce(
-        (result: string[], current: DataLeak) =>
-          [...result].concat(current.found_with),
-        []
-      );
-      setAllDataFound(
-        dataFound.filter(function (elem, index, self) {
-          return index === self.indexOf(elem);
-        })
-      );
-      console.log(allDataFound);
-      console.log(dataLeaks);
       setResponseReceived(true);
     }
   }
 
   async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (searchRut) {
+    const rutQuery = searchRut
+      .trim()
+      .replace(" ", "")
+      .replace(".", "")
+      .replace("-", "");
+    if (rutQuery) {
       // TODO: Remove '.' and '-' symbols
-      const rutQuery = searchRut.trim();
       const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         rutQuery,
         QueryType.Rut
       );
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
+    } else {
+      console.log("Not valid rut!");
     }
   }
 
   async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (searchPhone) {
-      const phoneQuery = searchPhone.trim();
+    const phoneQuery = searchPhone.trim();
+    if (phoneQuery) {
       const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
         phoneQuery,
         QueryType.Phone
@@ -98,9 +88,11 @@ export default function Home2() {
   }
 
   useEffect(() => {
-    setColumns(getLeakTableColumns(dataLeaks));
-    setTableData(getLeakTableRows(dataLeaks));
-  }, [allDataFound, dataLeaks]);
+    if (dataLeaks.length > 0) {
+      setColumns(getLeakTableColumns(dataLeaks));
+      setTableData(getLeakTableRows(dataLeaks));
+    }
+  }, [dataLeaks]);
 
   const searchKeys = [
     {
@@ -140,7 +132,9 @@ export default function Home2() {
   ];
 
   function clearSearchIput() {
-    // setSearchEmail("");
+    setSearchEmail("");
+    setSearchPhone("");
+    setSearchRut("");
     setResponseReceived(false);
   }
 
@@ -210,12 +204,16 @@ export default function Home2() {
                           />
                           <AlertMessage
                             boxColor="bg-red-hackerlab"
-                            message={`¡Este correo ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
+                            message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
                           />
                         </IconContext.Provider>
                         {/* <div className="container mx-auto py-10"> */}
                         <div className="w-full mx-auto py-5">
-                          <LeaksTable columns={columns} data={tableData} />
+                          <LeaksTable
+                            columns={columns}
+                            data={tableData}
+                            queried_type={item.name}
+                          />
                         </div>
                       </>
                     ) : (
@@ -227,7 +225,7 @@ export default function Home2() {
                         />
                         <AlertMessage
                           boxColor="bg-green-hackerlab"
-                          message="¡Este correo no ha sido encontrado en filtraciones de nuestro conocimiento!"
+                          message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
                         />
                       </IconContext.Provider>
                     )}
@@ -260,22 +258,33 @@ function BreachCard({ breach, index }: { breach: Breach; index: number }) {
       id={`${index}`}
       className="flex flex-col items-start my-1 p-4 border rounded-lg w-full"
     >
-      <h4 className="font-bold text-lg">
+      <h3 className="font-bold text-xl">
         {`${breach.name} (${breach.breach_date.slice(0, 4)})`}
-      </h4>
+      </h3>
       <p>{breach.description}</p>
       <p>
-        <b>Datos comprometidos</b>
+        <b>Tipos de datos encontrados: </b>
+        {breach.breached_data.join(", ")}
+      </p>
+      <p className="font-bold self-center pt-2 underline">
+        Consejos de seguridad
       </p>
       <div className="flex flex-col">
-        <div className="flex flex-row items-center">
+        {breach.security_tips.map((tip, index) => (
+          <div className="ml-3 flex flex-row items-center gap-1" key={index}>
+            {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
+            <AiOutlineSafety color="green"></AiOutlineSafety>
+            <>{tip}</>
+          </div>
+        ))}
+        {/* <div className="flex flex-row items-center">
           <p>Contraseña</p>
           <MdError color="red"></MdError>
         </div>
         <div className="flex flex-row items-center">
           <p>Contraseña</p>
           <MdError style={{ fill: `${redColor}` }}></MdError>
-        </div>
+        </div> */}
       </div>
     </div>
   );

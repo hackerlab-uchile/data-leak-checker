@@ -14,7 +14,8 @@ export type TypesLeak = {
 function getDataFoundList(dataLeaks: DataLeak[]): string[] {
   let dataFound: string[] = dataLeaks.reduce(
     (result: string[], current: DataLeak) =>
-      [...result].concat(current.found_with),
+      // [...result].concat(current.found_with),
+      [...result].concat(current.breach.breached_data),
     []
   );
   return dataFound.filter(function (elem, index, self) {
@@ -51,6 +52,10 @@ export function getLeakTableColumns(
               {/* <BsExclamationLg fontSize="3em" color="red"></BsExclamationLg> */}
             </div>
           );
+        } else if (rowValue == "-") {
+          return (
+            <div className="flex justify-center text-center w-full">-</div>
+          );
         } else {
           return typeof rowValue == "string" ? (
             <a href={`#${index}`}>
@@ -67,12 +72,19 @@ export function getLeakTableColumns(
 
 export function getLeakTableRows(dataLeaks: DataLeak[]): TypesLeak[] {
   const rawColumns: string[] = getDataFoundList(dataLeaks);
-  return dataLeaks.map((dl) => {
+  return dataLeaks.map((dl: DataLeak) => {
     let data: TypesLeak = {
       breach: `${dl.breach.name} (${dl.breach.breach_date.slice(0, 4)})`,
     };
     rawColumns.forEach((col) => {
-      data[col] = dl.found_with.includes(col) ? "yes" : "no";
+      if ([dl.data_type, ...dl.found_with].includes(col)) {
+        data[col] = "yes";
+      } else if (dl.breach.breached_data.includes(col)) {
+        data[col] = "no";
+      } else {
+        data[col] = "-";
+      }
+      // data[col] = [dl.data_type, ...dl.found_with].includes(col) ? "yes" : "no";
     });
     return data;
   });

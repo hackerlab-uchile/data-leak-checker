@@ -5,11 +5,12 @@ export interface Breach {
   // breach_date: Date;
   breach_date: string;
   created_at: string;
-  data_types: string[];
+  breached_data: string[];
+  security_tips: string[];
 }
 
 export interface DataLeak {
-  // data_type: string;
+  data_type: string;
   breach: Breach;
   found_with: string[];
 }

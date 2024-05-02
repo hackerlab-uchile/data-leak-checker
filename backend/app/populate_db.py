@@ -4,6 +4,7 @@ from core.database import engine
 from models.breach import Breach
 from models.data_leak import DataLeak
 from models.data_type import DataType
+from models.security_tip import SecurityTip
 from sqlalchemy.orm import Session
 
 # from models.password import Password
@@ -146,4 +147,28 @@ def populate_dummy_data():
     ]
     session.add_all(data_leaks)
     session.commit()
+
+    # Security Tips
+    security_tips: list[SecurityTip] = [
+        SecurityTip(
+            data_type_id=data_types["email"].id,
+            description="Manténgase atenta(o) a posibles correos electrónicos fraudulentos.",
+        ),
+        SecurityTip(
+            data_type_id=data_types["phone"].id,
+            description="Manténgase atenta(o) a posibles llamadas o mensajes de textos fraudulentos.",
+        ),
+        SecurityTip(
+            data_type_id=data_types["password"].id,
+            description="Cambie esta contraseña en todas las cuentas que la utilicen, y no vuelva a utilizar esta misma contraseña nuevamente.",
+        ),
+        SecurityTip(
+            data_type_id=data_types["credit_card"].id,
+            description="Bloqueé su tarjeta de crédito y/o avise al banco que es posible que su tarjeta haya sido comprometida por terceros.",
+        ),
+    ]
+    session.add_all(security_tips)
+    session.commit()
+
+    # Se cierra conexión
     session.close()

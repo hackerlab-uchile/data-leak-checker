@@ -34,3 +34,4 @@ class DataLeakShow(BaseModel):
     data_type: str = Field(validation_alias="data_type_display")
     breach: BreachShow = Field(validation_alias="breach_found")
     found_with: List[str] = Field(validation_alias="found_with_display")
+    # security_tips: List[str] = Field(validation_alias="breach_security_tips")

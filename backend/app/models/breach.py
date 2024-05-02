@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import List
 
 from core.database import Base
@@ -23,6 +24,27 @@ class Breach(Base):
     def data_types(self) -> list[str]:
         if self.data_breached:
             return list(map(lambda x: x.name, self.data_breached))
+        return []
+
+    @property
+    def display_data_types(self) -> list[str]:
+        if self.data_breached:
+            return list(map(lambda x: x.display_name, self.data_breached))
+        return []
+
+    @property
+    def security_tips(self) -> list[str]:
+        if len(self.data_breached):
+            result = list(
+                reduce(
+                    lambda y, z: y + z,
+                    map(
+                        lambda x: list(map(lambda s: s.description, x.security_tips)),
+                        self.data_breached,
+                    ),
+                )
+            )
+            return result
         return []
 
     # def __repr__(self):
