@@ -47,6 +47,9 @@ services:
       - WATCHPACK_POLLING=true
       - NEXT_PUBLIC_BACKEND_URL
       - NEXT_PUBLIC_FRONTEND_URL
+      - NEXT_PUBLIC_BACKEND_HOST
+      - NEXT_PUBLIC_BACKEND_PORT
+      - NEXT_PUBLIC_PROD
 
 volumes:
   db-data:
