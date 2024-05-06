@@ -8,9 +8,7 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -92,12 +90,12 @@ export function LeaksTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="py-3 grid grid-cols-4 justify-items-center">
+      <div className="py-3 grid grid-cols-2 sm:grid-cols-4 gap-y-1 justify-items-center">
         <p className="text-sm flex flex-row items-center">
           <TbShieldExclamation
             fontSize="1.5em"
             color="red"
-            className="text-center"
+            className="shrink-0 text-center"
           ></TbShieldExclamation>
           : Encontrado en la filtración
         </p>

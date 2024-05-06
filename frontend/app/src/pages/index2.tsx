@@ -12,24 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
-import { FormEvent, Suspense, useEffect, useState } from "react";
-import { Breach, DataLeak } from "@/models/Breach";
-import { getDataLeaksByValueAndType, QueryType } from "@/api/api";
+import CryptoJS from "crypto-js";
+import { FormEvent, useState } from "react";
+import { Breach } from "@/models/Breach";
+import { getBreachesByQueryType, QueryType } from "@/api/api";
+import { MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
-import { MdOutlineSecurity } from "react-icons/md";
-import { AiOutlineSafety } from "react-icons/ai";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { IconContext } from "react-icons";
-import { PiShieldWarningFill } from "react-icons/pi";
-import { LeaksTable } from "@/components/breaches/leaks-table";
-import { ColumnDef } from "@tanstack/react-table";
-import {
-  TypesLeak,
-  getLeakTableColumns,
-  getLeakTableRows,
-} from "@/components/breaches/columns";
-
-const redColor = "#ED342F";
 
 export default function Home2() {
   const router = useRouter();
@@ -37,62 +27,53 @@ export default function Home2() {
   const [responseReceived, setResponseReceived] = useState(false);
   const [searchRut, setSearchRut] = useState("");
   const [searchPhone, setSearchPhone] = useState("");
-  const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
-  const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
-  const [tableData, setTableData] = useState<TypesLeak[]>([]);
+  const [breaches, setBreaches] = useState<Array<Breach>>([]);
 
   async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const emailQuery = searchEmail.trim();
-    if (emailQuery) {
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
+    if (searchEmail) {
+      router.push(`/search?search=${searchEmail}`, "/search");
+      return;
+      const emailQuery = CryptoJS.SHA256(searchEmail).toString(
+        CryptoJS.enc.Hex
+      );
+      console.log(emailQuery);
+      const breachesList: Breach[] = await getBreachesByQueryType(
         emailQuery,
         QueryType.Email
       );
-      setDataLeaks(dataLeaksList);
+      setBreaches(breachesList);
       setResponseReceived(true);
     }
   }
 
   async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const rutQuery = searchRut
-      .trim()
-      .replace(" ", "")
-      .replace(".", "")
-      .replace("-", "");
-    if (rutQuery) {
-      // TODO: Remove '.' and '-' symbols
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
+    if (searchRut) {
+      const rutQuery = CryptoJS.SHA256(searchRut).toString(CryptoJS.enc.Hex);
+      const breachesList: Breach[] = await getBreachesByQueryType(
         rutQuery,
         QueryType.Rut
       );
-      setDataLeaks(dataLeaksList);
+      setBreaches(breachesList);
       setResponseReceived(true);
-    } else {
-      console.log("Not valid rut!");
     }
   }
 
   async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const phoneQuery = searchPhone.trim();
-    if (phoneQuery) {
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
+    if (searchPhone) {
+      const phoneQuery = CryptoJS.SHA256(searchPhone).toString(
+        CryptoJS.enc.Hex
+      );
+      const breachesList: Breach[] = await getBreachesByQueryType(
         phoneQuery,
         QueryType.Phone
       );
-      setDataLeaks(dataLeaksList);
+      setBreaches(breachesList);
       setResponseReceived(true);
     }
   }
-
-  useEffect(() => {
-    if (dataLeaks.length > 0) {
-      setColumns(getLeakTableColumns(dataLeaks));
-      setTableData(getLeakTableRows(dataLeaks));
-    }
-  }, [dataLeaks]);
 
   const searchKeys = [
     {
@@ -132,9 +113,7 @@ export default function Home2() {
   ];
 
   function clearSearchIput() {
-    setSearchEmail("");
-    setSearchPhone("");
-    setSearchRut("");
+    // setSearchEmail("");
     setResponseReceived(false);
   }
 
@@ -192,54 +171,60 @@ export default function Home2() {
                   </CardFooter>
                 </form>
               </Card>
-              {responseReceived ? (
-                <div className="flex flex-col mt-5 w-full items-center justify-start">
-                  <div className="flex flex-col w-full self-start justifiy-start items-center">
-                    {dataLeaks.length > 0 ? (
-                      <>
-                        <IconContext.Provider value={{ color: `${redColor}` }}>
-                          <PiShieldWarningFill
-                            fontSize="3.5em"
+              {responseReceived && (
+                // <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
+                <div className="flex items-center justify-center">
+                  <label>
+                    {breaches.length > 0 ? (
+                      <div className="flex flex-col">
+                        <div className="pb-2 flex flex-row">
+                          <MdError
+                            color="red"
+                            fontSize="4.5em"
                             className="self-center"
                           />
-                          <AlertMessage
-                            boxColor="bg-red-hackerlab"
-                            message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
-                          />
-                        </IconContext.Provider>
-                        {/* <div className="container mx-auto py-10"> */}
-                        <div className="w-full mx-auto py-5">
-                          <LeaksTable
-                            columns={columns}
-                            data={tableData}
-                            queried_type={item.name}
-                          />
+                          <p className="pl-3 self-center">
+                            {`Este ${item.name} ha sido encontrado en las siguientes
+                            filtraciones:`}
+                          </p>
                         </div>
-                      </>
+                        <div className="flex flex-col w-full">
+                          <div className="flex flex-col w-full">
+                            {breaches.map((breach) => (
+                              <div
+                                key={breach.id}
+                                className="my-1 p-4 border rounded-lg w-full"
+                              >
+                                <h4 className="text-lg font-bold">
+                                  {breach.name}
+                                </h4>
+                                <p>{breach.description}</p>
+                                <p>
+                                  {`Fecha de subida: ${breach.created_at.slice(
+                                    0,
+                                    10
+                                  )}`}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <IconContext.Provider value={{ color: "green" }}>
+                      <div className="pb-2 flex flex-row">
                         <FaCheckCircle
                           color="green"
-                          fontSize="3.5em"
+                          fontSize="4.5em"
                           className="self-center"
                         />
-                        <AlertMessage
-                          boxColor="bg-green-hackerlab"
-                          message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
-                        />
-                      </IconContext.Provider>
+                        <p className="pl-3 self-center">
+                          {`Este ${item.name} `} <strong>NO</strong> ha sido
+                          encontrado en filtraciones de nuestro conocimiento.
+                        </p>
+                      </div>
                     )}
-                  </div>
-                  {dataLeaks.map((dLeak, index) => (
-                    <BreachCard
-                      key={index}
-                      breach={dLeak.breach}
-                      index={index}
-                    />
-                  ))}
+                  </label>
                 </div>
-              ) : (
-                <Suspense fallback={<p>Buscando...</p>}></Suspense>
               )}
             </TabsContent>
           ))}
@@ -249,59 +234,5 @@ export default function Home2() {
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left"></div>
     </main>
-  );
-}
-
-function BreachCard({ breach, index }: { breach: Breach; index: number }) {
-  return (
-    <div
-      id={`${index}`}
-      className="flex flex-col items-start my-1 p-4 border rounded-lg w-full"
-    >
-      <h3 className="font-bold text-xl">
-        {`${breach.name} (${breach.breach_date.slice(0, 4)})`}
-      </h3>
-      <p>{breach.description}</p>
-      <p>
-        <b>Tipos de datos encontrados: </b>
-        {breach.breached_data.join(", ")}
-      </p>
-      <p className="font-bold self-center pt-2 underline">
-        Consejos de seguridad
-      </p>
-      <div className="flex flex-col">
-        {breach.security_tips.map((tip, index) => (
-          <div className="ml-3 flex flex-row items-center gap-1" key={index}>
-            {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
-            <AiOutlineSafety color="green"></AiOutlineSafety>
-            <>{tip}</>
-          </div>
-        ))}
-        {/* <div className="flex flex-row items-center">
-          <p>Contraseña</p>
-          <MdError color="red"></MdError>
-        </div>
-        <div className="flex flex-row items-center">
-          <p>Contraseña</p>
-          <MdError style={{ fill: `${redColor}` }}></MdError>
-        </div> */}
-      </div>
-    </div>
-  );
-}
-
-function AlertMessage({
-  message,
-  boxColor,
-}: {
-  message: string;
-  boxColor: string;
-}) {
-  return (
-    <div
-      className={`flex px-3 rounded-md justify-center text-white ${boxColor} w-[90%]`}
-    >
-      <p className="text-xl text-center">{message}</p>
-    </div>
   );
 }

@@ -22,7 +22,8 @@ const Navbar = () => {
       <nav className="w-full relative top-0 z-40 ">
         <div className="container mx-auto">
           <div className="flex items-center justify-between py-2">
-            <div className="flex w-1/4 items-center justify-between">
+            {/* <div className="flex w-1/4 items-center justify-between"> */}
+            <div className="flex w-full items-center justify-between">
               {/* Logo Sitio */}
               <Link href="/" className="block">
                 <h1 className="text-lg font-bold">Data-Leak-Checker</h1>
