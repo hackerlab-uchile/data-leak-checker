@@ -1,8 +1,8 @@
 import Navbar from "@/components/Navbar";
 import CryptoJS from "crypto-js";
 import { FormEvent, Suspense, useEffect, useState } from "react";
-import { Breach } from "@/models/Breach";
-import { QueryType, getBreachesByQueryType } from "@/api/api";
+import { Breach, DataLeak } from "@/models/Breach";
+import { QueryType, getDataLeaksByValueAndTypeReal } from "@/api/api";
 import { PiShieldWarningFill } from "react-icons/pi";
 import { MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
@@ -15,34 +15,32 @@ const redColor = "#ED342F";
 export default function Home() {
   const router = useRouter();
   const [newSearch, setNewSearch] = useState("");
-  const searchedEmail = router.query.search ? String(router.query.search) : "";
-  const [breaches, setBreaches] = useState<Array<Breach>>([]);
+  const searchedData = router.query.search ? String(router.query.search) : "";
+  const queryType = router.query.type ? String(router.query.type) : "";
+  const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
   const [responseReceived, setResponseReceived] = useState(false);
 
   async function get_breaches() {
-    const emailQuery = CryptoJS.SHA256(searchedEmail).toString(
-      CryptoJS.enc.Hex
-    );
-    console.log(emailQuery);
-    const breachesList: Breach[] = await getBreachesByQueryType(
-      emailQuery,
+    console.log(searchedData);
+    const dataLeakList: DataLeak[] = await getDataLeaksByValueAndTypeReal(
+      searchedData,
       QueryType.Email
     );
-    console.log(breachesList);
-    setBreaches(breachesList);
+    console.log(dataLeakList);
+    setDataLeaks(dataLeakList);
     setResponseReceived(true);
   }
 
   useEffect(() => {
-    if (searchedEmail) {
+    if (searchedData) {
       get_breaches();
     } else {
       router.push("/");
     }
     return () => {
-      setBreaches([]);
+      setDataLeaks([]);
     };
-  }, [searchedEmail]);
+  }, [searchedData]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-24 pt-5">
@@ -53,16 +51,16 @@ export default function Home() {
         setSearchTerm={setNewSearch}
       /> */}
       <p className="self-center text-zinc-400">Correo consultado:</p>
-      <h2 className="text-2xl font-bold self-center">{searchedEmail}</h2>
+      <h2 className="text-2xl font-bold self-center">{searchedData}</h2>
       {responseReceived ? (
         <div className="flex flex-col mt-5 w-full items-center justify-start">
           <div className="flex flex-col w-full self-start justifiy-start items-center">
-            {breaches.length > 0 ? (
+            {dataLeaks.length > 0 ? (
               <IconContext.Provider value={{ color: `${redColor}` }}>
                 <PiShieldWarningFill fontSize="3.5em" className="self-center" />
                 <AlertMessage
                   boxColor="bg-red-hackerlab"
-                  message={`¡Este correo ha sido visto en ${breaches.length} filtraciones de nuestro conocimiento!`}
+                  message={`¡Este correo ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
                 />
               </IconContext.Provider>
             ) : (
@@ -79,8 +77,8 @@ export default function Home() {
               </IconContext.Provider>
             )}
           </div>
-          {breaches.map((breach) => (
-            <BreachCard key={breach.id} breach={breach} />
+          {dataLeaks.map((dLeak, index) => (
+            <BreachCard key={index} breach={dLeak.breach} />
           ))}
         </div>
       ) : (

@@ -9,7 +9,7 @@ from populate_db import populate_dummy_data
 
 def init_app():
     """Inits the application"""
-    new_app = FastAPI()
+    new_app = FastAPI(root_path="/api")
     new_app.include_router(api_router)
 
     allowed_origins = os.getenv(

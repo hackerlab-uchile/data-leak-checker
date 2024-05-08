@@ -48,6 +48,7 @@ export default function Home() {
   const router = useRouter();
   const [searchEmail, setSearchEmail] = useState("");
   const [responseReceived, setResponseReceived] = useState(false);
+  const [error, setError] = useState<boolean>(false);
   const [waitingResponse, setWaitingResponse] = useState(false);
   const [searchRut, setSearchRut] = useState("");
   const [searchPhone, setSearchPhone] = useState("");
@@ -61,10 +62,9 @@ export default function Home() {
     if (emailQuery) {
       setResponseReceived(false);
       setWaitingResponse(true);
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
-        emailQuery,
-        QueryType.Email
-      );
+      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
+        await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
+      setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
       setWaitingResponse(false);
@@ -82,10 +82,9 @@ export default function Home() {
       setResponseReceived(false);
       setWaitingResponse(true);
       console.log("Query:", rutQuery);
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
-        rutQuery,
-        QueryType.Rut
-      );
+      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
+        await getDataLeaksByValueAndType(rutQuery, QueryType.Rut);
+      setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
       setWaitingResponse(false);
@@ -100,10 +99,9 @@ export default function Home() {
     if (phoneQuery) {
       setResponseReceived(false);
       setWaitingResponse(true);
-      const dataLeaksList: DataLeak[] = await getDataLeaksByValueAndType(
-        phoneQuery,
-        QueryType.Phone
-      );
+      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
+        await getDataLeaksByValueAndType(phoneQuery, QueryType.Phone);
+      setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
       setWaitingResponse(false);
@@ -251,73 +249,85 @@ export default function Home() {
                 </form>
               </Card>
               {responseReceived ? (
-                <div className="flex flex-col mt-5 w-full items-center justify-start">
-                  <div className="flex flex-col w-full self-start justifiy-start items-center">
-                    {dataLeaks.length > 0 ? (
-                      <>
-                        <IconContext.Provider value={{ color: `${redColor}` }}>
-                          <PiShieldWarningFill
-                            fontSize="3.5em"
-                            className="self-center"
-                          />
-                          <AlertMessage
-                            boxColor="bg-red-hackerlab"
-                            message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
-                          />
-                        </IconContext.Provider>
-                        {/* <div className="container mx-auto py-10"> */}
-                        <div className="w-full mx-auto py-5">
-                          <LeaksTable
-                            columns={columns}
-                            data={tableData}
-                            queried_type={item.name}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <FaCheckCircle
-                          // color="green"
-                          fontSize="3.5em"
-                          className="self-center text-green-hackerlab"
-                        />
-                        <AlertMessage
-                          boxColor="bg-green-hackerlab"
-                          message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
-                        />
-                        <div className="p-3 my-5 flex flex-col justify-center w-full sm:w-[90%] border rounded-md border-cyan-400">
-                          <h3 className="flex flex-row text-lg font-bold underline">
-                            <FcIdea className="mt-1"></FcIdea>
-                            Recomendaciones de seguridad
-                          </h3>
-                          {safeTips.map((tip, index) => (
-                            <div
-                              className="ml-3 items-start flex flex-row gap-1 text-lg"
-                              key={index}
+                <>
+                  {!error ? (
+                    <div className="flex flex-col mt-5 w-full items-center justify-start">
+                      <div className="flex flex-col w-full self-start justifiy-start items-center">
+                        {dataLeaks.length > 0 ? (
+                          <>
+                            <IconContext.Provider
+                              value={{ color: `${redColor}` }}
                             >
-                              <AiOutlineSafety
-                                className="mt-1.5 shrink-0"
-                                color="green"
-                              ></AiOutlineSafety>
-                              <p className="font-thin m-0">
-                                <b>{tip.title}: </b>
-                                {tip.value}
-                              </p>
+                              <PiShieldWarningFill
+                                fontSize="3.5em"
+                                className="self-center"
+                              />
+                              <AlertMessage
+                                boxColor="bg-red-hackerlab"
+                                message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
+                              />
+                            </IconContext.Provider>
+                            {/* <div className="container mx-auto py-10"> */}
+                            <div className="w-full mx-auto py-5">
+                              <LeaksTable
+                                columns={columns}
+                                data={tableData}
+                                queried_type={item.name}
+                              />
                             </div>
-                          ))}
-                          <p></p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {dataLeaks.map((dLeak, index) => (
-                    <BreachCard
-                      key={index}
-                      breach={dLeak.breach}
-                      index={index}
-                    />
-                  ))}
-                </div>
+                          </>
+                        ) : (
+                          <>
+                            <FaCheckCircle
+                              // color="green"
+                              fontSize="3.5em"
+                              className="self-center text-green-hackerlab"
+                            />
+                            <AlertMessage
+                              boxColor="bg-green-hackerlab"
+                              message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
+                            />
+                            <div className="p-3 my-5 flex flex-col justify-center w-full sm:w-[90%] border rounded-md border-cyan-400">
+                              <h3 className="flex flex-row text-lg font-bold underline">
+                                <FcIdea className="mt-1"></FcIdea>
+                                Recomendaciones de seguridad
+                              </h3>
+                              {safeTips.map((tip, index) => (
+                                <div
+                                  className="ml-3 items-start flex flex-row gap-1 text-lg"
+                                  key={index}
+                                >
+                                  <AiOutlineSafety
+                                    className="mt-1.5 shrink-0"
+                                    color="green"
+                                  ></AiOutlineSafety>
+                                  <p className="font-thin m-0">
+                                    <b>{tip.title}: </b>
+                                    {tip.value}
+                                  </p>
+                                </div>
+                              ))}
+                              <p></p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {dataLeaks.map((dLeak, index) => (
+                        <BreachCard
+                          key={index}
+                          breach={dLeak.breach}
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="my-5 w-full text-center">
+                      <p className="text-lg text-red-hackerlab">
+                        Error: por favor, inténtelo de nuevo más tarde
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   {/* // <Suspense fallback={<p>Buscando...</p>}></Suspense> */}

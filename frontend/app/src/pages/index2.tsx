@@ -15,11 +15,11 @@ import Navbar from "@/components/Navbar";
 import CryptoJS from "crypto-js";
 import { FormEvent, useState } from "react";
 import { Breach } from "@/models/Breach";
-import { getBreachesByQueryType, QueryType } from "@/api/api";
 import { MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { QueryType } from "@/api/api";
 
 export default function Home2() {
   const router = useRouter();
@@ -32,46 +32,30 @@ export default function Home2() {
   async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchEmail) {
-      router.push(`/search?search=${searchEmail}`, "/search");
-      return;
-      const emailQuery = CryptoJS.SHA256(searchEmail).toString(
-        CryptoJS.enc.Hex
+      router.push(
+        `/search?search=${searchEmail}&type=${QueryType.Email}`,
+        "/search"
       );
-      console.log(emailQuery);
-      const breachesList: Breach[] = await getBreachesByQueryType(
-        emailQuery,
-        QueryType.Email
-      );
-      setBreaches(breachesList);
-      setResponseReceived(true);
     }
   }
 
   async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchRut) {
-      const rutQuery = CryptoJS.SHA256(searchRut).toString(CryptoJS.enc.Hex);
-      const breachesList: Breach[] = await getBreachesByQueryType(
-        rutQuery,
-        QueryType.Rut
+      router.push(
+        `/search?search=${searchRut}&type=${QueryType.Rut}`,
+        "/search"
       );
-      setBreaches(breachesList);
-      setResponseReceived(true);
     }
   }
 
   async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (searchPhone) {
-      const phoneQuery = CryptoJS.SHA256(searchPhone).toString(
-        CryptoJS.enc.Hex
+      router.push(
+        `/search?search=${searchPhone}&type=${QueryType.Phone}`,
+        "/search"
       );
-      const breachesList: Breach[] = await getBreachesByQueryType(
-        phoneQuery,
-        QueryType.Phone
-      );
-      setBreaches(breachesList);
-      setResponseReceived(true);
     }
   }
 
@@ -171,61 +155,6 @@ export default function Home2() {
                   </CardFooter>
                 </form>
               </Card>
-              {responseReceived && (
-                // <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-                <div className="flex items-center justify-center">
-                  <label>
-                    {breaches.length > 0 ? (
-                      <div className="flex flex-col">
-                        <div className="pb-2 flex flex-row">
-                          <MdError
-                            color="red"
-                            fontSize="4.5em"
-                            className="self-center"
-                          />
-                          <p className="pl-3 self-center">
-                            {`Este ${item.name} ha sido encontrado en las siguientes
-                            filtraciones:`}
-                          </p>
-                        </div>
-                        <div className="flex flex-col w-full">
-                          <div className="flex flex-col w-full">
-                            {breaches.map((breach) => (
-                              <div
-                                key={breach.id}
-                                className="my-1 p-4 border rounded-lg w-full"
-                              >
-                                <h4 className="text-lg font-bold">
-                                  {breach.name}
-                                </h4>
-                                <p>{breach.description}</p>
-                                <p>
-                                  {`Fecha de subida: ${breach.created_at.slice(
-                                    0,
-                                    10
-                                  )}`}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="pb-2 flex flex-row">
-                        <FaCheckCircle
-                          color="green"
-                          fontSize="4.5em"
-                          className="self-center"
-                        />
-                        <p className="pl-3 self-center">
-                          {`Este ${item.name} `} <strong>NO</strong> ha sido
-                          encontrado en filtraciones de nuestro conocimiento.
-                        </p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              )}
             </TabsContent>
           ))}
         </Tabs>

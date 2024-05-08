@@ -10,18 +10,20 @@ export enum QueryType {
 export async function getDataLeaksByValueAndType(
   query: string,
   type: QueryType
-): Promise<DataLeak[]> {
+): Promise<[DataLeak[], boolean]> {
   let response;
   const data = { value: query, dtype: type };
+  let got_error: boolean = false;
   try {
     response = await apiClient.post<DataLeak[]>("/breach/data/demo/", data);
-    return response.data;
+    return [response.data, got_error];
   } catch (error: any) {
+    got_error = true;
     if (error.response && error.response.status === 404) {
-      return [];
+      return [[], got_error];
     } else {
       // TODO: Informar que ha ocurrido un error
-      return [];
+      return [[], got_error];
       // throw error;
     }
   }
