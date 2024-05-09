@@ -440,7 +440,7 @@ const LandingPage = ({}) => {
           <b> obtener acceso a tus cuentas</b>, <b>suplantar tu identidad</b> e{" "}
           <b>incluso crear estafas más convincentes</b>.
         </p>
-        <div className="grid grid-cols-3 text-center py-5 justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 text-center py-5 justify-items-center">
           <div className="flex flex-col items-center">
             <FaUnlock fontSize={"5em"} className="my-3"></FaUnlock>
             <p className="text-muted-foreground">
