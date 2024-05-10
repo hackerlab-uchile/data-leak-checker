@@ -36,6 +36,7 @@ export function LeaksTable<TData, TValue>({
   return (
     <div>
       <h2 className="text-center font-bold">DATOS COMPROMETIDOS</h2>
+      <Simbologia />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -90,36 +91,39 @@ export function LeaksTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="py-3 grid grid-cols-2 sm:grid-cols-4 gap-y-1 justify-items-center">
-        <p className="text-sm flex flex-row items-center">
-          <TbShieldExclamation
-            fontSize="1.5em"
-            color="red"
-            className="shrink-0 text-center"
-          ></TbShieldExclamation>
-          : Encontrado en la filtración
-        </p>
-        <p className="text-sm flex flex-row items-center">
-          - : Dato no filtrado
-        </p>
-        <div className="col-span-2 text-sm flex flex-row items-center">
-          <p className="flex flex-row">
-            <LuSearchX
-              className="shrink-0"
-              fontSize="1.5em"
-              color="gray"
-            ></LuSearchX>
-            :
-          </p>
-          <p className="ml-2">
-            No visto junto al {queried_type.toLowerCase()} consultado. Sin
-            embargo, esto puede significar que no lo hayamos visto, pero
-            igualmente se haya visto filtrado.
-            {/* No visto junto al {queried_type.toLowerCase()} consultado. Sin
-            embargo, esto no quiere decir que haya no haya sido filtrado. */}
-          </p>
-        </div>
-      </div>
+      {/* <Simbologia /> */}
     </div>
   );
 }
+
+const Simbologia = ({}) => {
+  return (
+    <div className="py-3 text-sm text-muted-foreground grid grid-cols-2 sm:grid-cols-4 gap-x-1 gap-y-1 justify-items-center">
+      <p className="flex flex-row items-center self-start">
+        <TbShieldExclamation
+          fontSize="1.5em"
+          color="red"
+          className="shrink-0 text-center self-start"
+        ></TbShieldExclamation>
+        : Encontrado en la filtración.
+      </p>
+      <p className="flex flex-row items-center self-start">
+        - : Dato no filtrado.
+      </p>
+      <div className="col-span-2 justify-items-center flex flex-row items-center">
+        <p className="flex flex-row self-start">
+          <LuSearchX
+            className="shrink-0"
+            fontSize="1.5em"
+            color="gray"
+          ></LuSearchX>
+          :
+        </p>
+        <p className="ml-1 self-start">
+          Dato visto en otras cuentas de la misma filtración, pero no detectado
+          en esta cuenta.
+        </p>
+      </div>
+    </div>
+  );
+};

@@ -39,8 +39,7 @@ import {
   getLeakTableRows,
 } from "@/components/breaches/columns";
 import { LuMailWarning } from "react-icons/lu";
-import { Loader, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 const redColor = "#ED342F";
 
@@ -199,6 +198,7 @@ export default function Home() {
             sido encontrados en filtraciones de datos!
           </p>
         </div>
+        <POCMessage></POCMessage>
         {/* <h3 className="font-bold">Consultar por:</h3> */}
         <Tabs
           defaultValue="email"
@@ -330,7 +330,6 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  {/* // <Suspense fallback={<p>Buscando...</p>}></Suspense> */}
                   {waitingResponse ? (
                     <div className="mt-10 flex w-full justify-center">
                       <Loader2 size={"3em"} className="animate-spin"></Loader2>
@@ -372,23 +371,15 @@ function BreachCard({ breach, index }: { breach: Breach; index: number }) {
       </p>
       <div className="flex flex-col">
         {breach.security_tips.map((tip, index) => (
-          <div className="ml-3 flex flex-row items-center gap-1" key={index}>
+          <div className="ml-3 flex flex-row items-start gap-1" key={index}>
             {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
             <AiOutlineSafety
-              className="shrink-0"
+              className="shrink-0 mt-1"
               color="green"
             ></AiOutlineSafety>
             <>{tip}</>
           </div>
         ))}
-        {/* <div className="flex flex-row items-center">
-          <p>Contraseña</p>
-          <MdError color="red"></MdError>
-        </div>
-        <div className="flex flex-row items-center">
-          <p>Contraseña</p>
-          <MdError style={{ fill: `${redColor}` }}></MdError>
-        </div> */}
       </div>
     </div>
   );
@@ -406,6 +397,21 @@ function AlertMessage({
       className={`flex px-3 rounded-md justify-center text-white ${boxColor} w-[90%]`}
     >
       <p className="text-xl text-center">{message}</p>
+    </div>
+  );
+}
+
+function POCMessage({}) {
+  return (
+    <div className="w-[90%] md:w-[80%] max-w-[1280px] rounded-md border-2 px-3 mb-4 border-red-600 bg-red-300">
+      <p className="font-bold">Leer antes de usar:</p>
+      <p>
+        Los datos de filtraciones presentes son <b>100% falsos</b>. Los datos
+        entregados son totalmente al azar, y no corresponden a ninguna
+        filtración de datos del mundo real. Este sitio es solamente una prueba
+        de concepto con el fin de averiguar si la información presentada es
+        comprensible para un futuro usuario.
+      </p>
     </div>
   );
 }
@@ -444,16 +450,24 @@ const LandingPage = ({}) => {
           <div className="flex flex-col items-center">
             <FaUnlock fontSize={"5em"} className="my-3"></FaUnlock>
             <p className="text-muted-foreground">
+              <b>Prevenir accesos a tus cuentas</b> por terceros, cambiando tu
+              contraseñas/credenciales filtradas oportunamente
+            </p>
+            {/* <p className="text-muted-foreground">
               Obtener acceso a tus cuentas, mediantes contraseñas/credenciales
               filtradas
-            </p>
+            </p> */}
           </div>
           <div className="flex flex-col items-center">
             <FaIdCard fontSize={"5em"} className="my-3"></FaIdCard>
             <p className="text-muted-foreground">
+              <b>Evitar una suplantación de identidad</b>, conociendo que datos
+              peronales o credenciales se han visto comprometidas
+            </p>
+            {/* <p className="text-muted-foreground">
               Suplantación de identidad, al tener a disposición credenciales e
               información personal{" "}
-            </p>
+            </p> */}
           </div>
           <div className="flex flex-col items-center">
             <LuMailWarning fontSize={"5em"} className="my-3"></LuMailWarning>
@@ -462,8 +476,8 @@ const LandingPage = ({}) => {
               className="my-3"
             ></MdOutlinePhishing> */}
             <p className="text-muted-foreground">
-              Estafas más convincentes, al tener más información personal de sus
-              víctimas
+              <b>Estar atento/a frente a intentos de estafas</b>, relacionadas a
+              la información filtrada
             </p>
           </div>
         </div>

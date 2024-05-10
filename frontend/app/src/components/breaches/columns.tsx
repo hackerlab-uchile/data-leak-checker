@@ -7,7 +7,7 @@ import { BsExclamationLg } from "react-icons/bs";
 import { LuSearchX } from "react-icons/lu";
 
 export type TypesLeak = {
-  breach: string;
+  filtración: string;
   [key: string]: string;
 };
 
@@ -26,7 +26,10 @@ function getDataFoundList(dataLeaks: DataLeak[]): string[] {
 export function getLeakTableColumns(
   dataLeaks: DataLeak[]
 ): ColumnDef<TypesLeak>[] {
-  const dataFoundUnique: string[] = ["breach", ...getDataFoundList(dataLeaks)];
+  const dataFoundUnique: string[] = [
+    "filtración",
+    ...getDataFoundList(dataLeaks),
+  ];
   return dataFoundUnique.map((value) => {
     return {
       accessorKey: value,
@@ -74,7 +77,7 @@ export function getLeakTableRows(dataLeaks: DataLeak[]): TypesLeak[] {
   const rawColumns: string[] = getDataFoundList(dataLeaks);
   return dataLeaks.map((dl: DataLeak) => {
     let data: TypesLeak = {
-      breach: `${dl.breach.name} (${dl.breach.breach_date.slice(0, 4)})`,
+      filtración: `${dl.breach.name} (${dl.breach.breach_date.slice(0, 4)})`,
     };
     rawColumns.forEach((col) => {
       if ([dl.data_type, ...dl.found_with].includes(col)) {
