@@ -12,7 +12,7 @@ class Breach(Base):
     __tablename__ = "breach"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
-    description: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str] = mapped_column(String(1000))
     breach_date: Mapped[Date] = mapped_column(Date)
     confirmed: Mapped[bool] = mapped_column(Boolean)
     is_sensitive: Mapped[bool] = mapped_column(Boolean)

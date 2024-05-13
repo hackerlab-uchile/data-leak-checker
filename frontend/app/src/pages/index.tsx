@@ -461,7 +461,7 @@ const LandingPage = ({}) => {
           <div className="flex flex-col items-center">
             <FaIdCard fontSize={"5em"} className="my-3"></FaIdCard>
             <p className="text-muted-foreground">
-              <b>Evitar una suplantación de identidad</b>, conociendo que datos
+              <b>Evitar una suplantación de identidad</b>, conociendo qué datos
               peronales o credenciales se han visto comprometidas
             </p>
             {/* <p className="text-muted-foreground">

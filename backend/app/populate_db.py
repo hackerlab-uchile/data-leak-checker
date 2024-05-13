@@ -30,10 +30,18 @@ def populate_dummy_data():
         "credit_card": DataType(
             id=4, name="credit_card", display_name="Tarjeta de crédito"
         ),
-        "address": DataType(id=5, name="address", display_name="Dirección"),
+        "address": DataType(id=5, name="address", display_name="Domicilio"),
         "ip_address": DataType(id=6, name="ip_address", display_name="Dirección IP"),
         "name": DataType(id=7, name="name", display_name="Nombre"),
         "password": DataType(id=8, name="password", display_name="Contraseña"),
+        "purchase_records": DataType(
+            id=9, name="purchase_records", display_name="Registro de compras"
+        ),
+        "passport": DataType(id=10, name="passport", display_name="Número pasaporte"),
+        "birthdate": DataType(
+            id=11, name="birthdate", display_name="Fecha de nacimiento"
+        ),
+        "username": DataType(id=12, name="username", display_name="Nombre de usuario"),
     }
     session.add_all(list(data_types.values()))
     session.commit()
@@ -83,6 +91,79 @@ def populate_dummy_data():
                 data_types["ip_address"],
             ],
         ),
+        Breach(
+            id=4,
+            name="Jumbo",
+            description="La importante cadena de supermercados Jumbo anunció el descubrimiento de una filtración de datos que comprometió la información personal de sus clientes. La brecha de seguridad, detectada e junio del año 2018, expuso nombres, direcciones de correo electrónico, números de teléfono y registros de compras de millones de clientes.",
+            breach_date="2018-06-29",
+            confirmed=True,
+            is_sensitive=False,
+            data_breached=[
+                data_types["email"],
+                data_types["name"],
+                data_types["phone"],
+                data_types["purchase_records"],
+            ],
+        ),
+        Breach(
+            id=5,
+            name="LATAM",
+            description="La aerolínea LATAM anunció el descubrimiento de una filtración de datos que afectó a su sistema de reservas. La brecha de seguridad, detectada en julio del año 2019, expuso información personal y detalles de viaje de miles de pasajeros que volaron en la aerolínea en las fechas entre marzo y julio del 2019. Los datos comprometidos incluyen nombres, números de pasaporte, RUT, números de tarjetas de crédito asociadas a reservas, detalles de itinerario y preferencias de viaje.",
+            breach_date="2019-07-19",
+            confirmed=True,
+            is_sensitive=False,
+            data_breached=[
+                data_types["name"],
+                data_types["passport"],
+                data_types["rut"],
+                data_types["credit_card"],
+                data_types["purchase_records"],
+            ],
+        ),
+        Breach(
+            id=6,
+            name="Farmacias Cruz Verde",
+            description="La cadena de farmacias Cruz Verde anunció el descubrimiento de una filtración de datos que afectó a su sistema de gestión de clientes. Esta filtración de datos, identificada el 02 de octubre del año 2019, comprometió información sensible de clientes que utilizaron servicios como recetas médicas y programas de fidelidad entre mayo y agosto de 2019. Los datos filtrados incluyen nombres, fechas de nacimiento, direcciones, RUT, historiales de medicación y detalles de compras de medicamentos.",
+            breach_date="2019-10-02",
+            confirmed=True,
+            is_sensitive=False,
+            data_breached=[
+                data_types["name"],
+                data_types["rut"],
+                data_types["address"],
+                data_types["purchase_records"],
+                data_types["birthdate"],
+            ],
+        ),
+        Breach(
+            id=7,
+            name="Falabella",
+            description="La conocida cadena de tiendas de retail, Falabella, anunció una filtración de datos que afectó a su sistema de ventas en línea. La brecha de seguridad, detectada en julio del año 2022, comprometió la información personal y financiera de clientes que realizaron compras en línea entre marzo y julio de ese mismo año. Los datos filtrados incluyen nombres, direcciones de envío, números de tarjetas de crédito, fechas de vencimiento y códigos de seguridad.",
+            breach_date="2022-07-29",
+            confirmed=True,
+            is_sensitive=False,
+            data_breached=[
+                data_types["email"],
+                data_types["name"],
+                data_types["address"],
+                data_types["credit_card"],
+            ],
+        ),
+        Breach(
+            id=8,
+            name="VTR",
+            description="El proveedor de servicios de internet, VTR, anunció el descubrimiento de una filtración de datos que afectó a su sistema de gestión de clientes. La brecha de seguridad, identificada el 4 de septiembre del año 2023, comprometió información confidencial de sus suscriptores que utilizaron los servicios de internet entre junio y septiembre de ese mismo año. Los datos filtrados incluyen nombres de usuario, direcciones de correo electrónico, direcciones IP asignadas, detalles de facturación y registros de actividad en línea.",
+            breach_date="2023-09-04",
+            confirmed=True,
+            is_sensitive=False,
+            data_breached=[
+                data_types["rut"],
+                data_types["email"],
+                data_types["username"],
+                data_types["password"],
+                data_types["ip_address"],
+            ],
+        ),
     ]
     session.add_all(breaches)
     session.commit()
@@ -113,7 +194,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=3,
-            hash_value=sha256("965672517".encode("UTF-8")).hexdigest(),
+            hash_value=sha256("911111111".encode("UTF-8")).hexdigest(),
             data_type=data_types["phone"],
             breach_id=1,
             found_with=[
@@ -124,7 +205,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=4,
-            hash_value=sha256("204438285".encode("UTF-8")).hexdigest(),
+            hash_value=sha256("111111111".encode("UTF-8")).hexdigest(),
             data_type=data_types["rut"],
             breach_id=1,
             found_with=[
@@ -135,7 +216,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=5,
-            hash_value=sha256("204438285".encode("UTF-8")).hexdigest(),
+            hash_value=sha256("111111111".encode("UTF-8")).hexdigest(),
             data_type=data_types["rut"],
             breach_id=3,
             found_with=[
