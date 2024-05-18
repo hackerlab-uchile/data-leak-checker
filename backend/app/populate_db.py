@@ -1,3 +1,5 @@
+import hmac
+import os
 from hashlib import sha256
 
 from core.database import engine
@@ -222,6 +224,21 @@ def populate_dummy_data():
             found_with=[
                 data_types["email"],
                 data_types["ip_address"],
+                data_types["name"],
+            ],
+        ),
+        DataLeak(
+            id=6,
+            hash_value=hmac.new(
+                os.getenv("HMAC_KEY", "").encode("UTF-8"),
+                "nico@example.com".encode("UTF-8"),
+                sha256,
+            ).hexdigest(),
+            data_type=data_types["email"],
+            breach_id=2,
+            found_with=[
+                data_types["credit_card"],
+                data_types["rut"],
                 data_types["name"],
             ],
         ),
