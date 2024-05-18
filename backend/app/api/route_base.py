@@ -1,6 +1,5 @@
+from api import route_breach, route_verify
 from fastapi import APIRouter
-
-from api import route_breach
 
 api_router = APIRouter()
 
@@ -12,3 +11,4 @@ def index():
 
 
 api_router.include_router(route_breach.router, prefix="/breach", tags=["breach"])
+api_router.include_router(route_verify.router, prefix="/verify", tags=["verify"])

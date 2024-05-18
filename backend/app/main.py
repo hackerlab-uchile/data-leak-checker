@@ -6,10 +6,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from populate_db import populate_dummy_data
 
+ROOT_ROUTE = os.getenv("ROOT_ROUTE", "")
+
 
 def init_app():
     """Inits the application"""
-    new_app = FastAPI(root_path="/api")
+    new_app = FastAPI(root_path=ROOT_ROUTE)
     new_app.include_router(api_router)
 
     allowed_origins = os.getenv(
