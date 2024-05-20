@@ -1,7 +1,4 @@
-import hmac
-import os
 import random
-from hashlib import sha256
 from typing import List
 
 from core.database import get_db
@@ -14,6 +11,7 @@ from schemas.data_leak import DataLeakInput, DataLeakShow
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
+from utils.crytpography import get_hash
 
 router = APIRouter()
 
@@ -21,31 +19,7 @@ router = APIRouter()
 @router.post("/data/", response_model=List[DataLeakShow])
 def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
     """Returns information about data breaches related to a value and type"""
-    hash_value = sha256(payload.value.encode("UTF-8")).hexdigest()
-    dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
-    if dtype is None:
-        # TODO: Throw error
-        # TODO: Se puede hacer una dependency, que entregue el dtype correspondiente
-        # TODO: Cómo se hacía una dependecy? xd
-        return []
-    found_breaches = (
-        db.query(DataLeak)
-        .join(Breach, Breach.id == DataLeak.breach_id)
-        .filter(DataLeak.hash_value == hash_value)
-        .filter(DataLeak.data_type_id == dtype.id)
-        .order_by(desc(Breach.breach_date))
-    ).all()
-    return found_breaches
-
-
-@router.post("/data-hmac/", response_model=List[DataLeakShow])
-def get_breaches_info_hmac(payload: DataLeakInput, db: Session = Depends(get_db)):
-    """Returns information about data breaches related to a value and type"""
-    key = os.getenv("HMAC_KEY", "")
-    byte_key = key.encode("UTF-8")
-    value = payload.value.encode()
-    hash_value = hmac.new(byte_key, value, sha256).hexdigest()
-    print(f"---> Input Hash: {hash_value}")
+    hash_value = get_hash(payload.value)
     dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
     if dtype is None:
         # TODO: Throw error

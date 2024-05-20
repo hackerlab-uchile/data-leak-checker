@@ -1,13 +1,10 @@
-import hmac
-import os
-from hashlib import sha256
-
 from core.database import engine
 from models.breach import Breach
 from models.data_leak import DataLeak
 from models.data_type import DataType
 from models.security_tip import SecurityTip
 from sqlalchemy.orm import Session
+from utils.crytpography import get_hash
 
 # from models.password import Password
 
@@ -175,7 +172,7 @@ def populate_dummy_data():
     data_leaks = [
         DataLeak(
             id=1,
-            hash_value=sha256("nico@example.com".encode("UTF-8")).hexdigest(),
+            hash_value=get_hash("nico@example.com"),
             data_type=data_types["email"],
             breach_id=2,
             found_with=[
@@ -186,7 +183,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=2,
-            hash_value=sha256("nico@example.com".encode("UTF-8")).hexdigest(),
+            hash_value=get_hash("nico@example.com"),
             data_type=data_types["email"],
             breach_id=3,
             found_with=[
@@ -196,7 +193,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=3,
-            hash_value=sha256("911111111".encode("UTF-8")).hexdigest(),
+            hash_value=get_hash("911111111"),
             data_type=data_types["phone"],
             breach_id=1,
             found_with=[
@@ -207,7 +204,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=4,
-            hash_value=sha256("111111111".encode("UTF-8")).hexdigest(),
+            hash_value=get_hash("111111111"),
             data_type=data_types["rut"],
             breach_id=1,
             found_with=[
@@ -218,7 +215,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=5,
-            hash_value=sha256("111111111".encode("UTF-8")).hexdigest(),
+            hash_value=get_hash("111111111"),
             data_type=data_types["rut"],
             breach_id=3,
             found_with=[
@@ -229,11 +226,7 @@ def populate_dummy_data():
         ),
         DataLeak(
             id=6,
-            hash_value=hmac.new(
-                os.getenv("HMAC_KEY", "").encode("UTF-8"),
-                "nico@example.com".encode("UTF-8"),
-                sha256,
-            ).hexdigest(),
+            hash_value=get_hash("nico@example.com"),
             data_type=data_types["email"],
             breach_id=2,
             found_with=[
