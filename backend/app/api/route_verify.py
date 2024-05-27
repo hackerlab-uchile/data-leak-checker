@@ -1,6 +1,8 @@
 import os
+import random
 
 import requests
+from core.config import SMTP_PASSWORD, SMTP_SERVER, SMTP_USERNAME
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
@@ -8,38 +10,56 @@ from pydantic import EmailStr
 
 router = APIRouter()
 
-conf = ConnectionConfig(
-    MAIL_USERNAME="DataLeakChecker",
-    MAIL_PASSWORD="**********",
-    MAIL_FROM="verify@dataleak.cl",
-    MAIL_PORT=587,
-    MAIL_SERVER="mail server",
-    MAIL_FROM_NAME="Desired Name",
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-)
+
+def get_mail_conf() -> ConnectionConfig | None:
+    if SMTP_PASSWORD and SMTP_USERNAME and SMTP_SERVER:
+        return ConnectionConfig(
+            MAIL_USERNAME=SMTP_USERNAME,
+            MAIL_PASSWORD=SMTP_PASSWORD,
+            MAIL_FROM=SMTP_USERNAME,
+            MAIL_PORT=587,
+            MAIL_SERVER=SMTP_SERVER,
+            # MAIL_FROM_NAME="Verificación DataLeakChecker",
+            MAIL_STARTTLS=True,
+            # MAIL_STARTTLS=False,
+            MAIL_SSL_TLS=False,
+            # MAIL_SSL_TLS=True,
+            USE_CREDENTIALS=True,
+            VALIDATE_CERTS=True,
+        )
+    print(
+        "Warning: Couldn't complete email configuration. USERNAME, PASSWORD or SERVER for SMTP server not found"
+    )
+    return None
 
 
-@router.post("/email/")
+def generate_random_code() -> int:
+    return random.randrange(1_000, 10_000)
+
+
+@router.post("/send/email/")
 async def send_email_verify(email: EmailStr):
-    html = """<p>Hi this test mail, thanks for using Fastapi-mail</p> """
+    random_code = generate_random_code()
+    html = f"""<p>¡Hola! A continuación, puedes ver tu código de verificación. ¡No lo compartas!</p>
+    <p><b>{random_code}</b></p>
+    """
 
     message = MessageSchema(
-        subject="Fastapi-Mail module",
+        subject="Verificación de correo electrónico",
         recipients=[email],
         body=html,
         subtype=MessageType.html,
     )
+    conf = get_mail_conf()
+    if conf:
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        return JSONResponse(status_code=200, content={"message": "email has been sent"})
+    return JSONResponse(status_code=503, content={"message": "Servicio no disponible"})
 
-    fm = FastMail(conf)
-    await fm.send_message(message)
-    return JSONResponse(status_code=200, content={"message": "email has been sent"})
 
-
-@router.post("/phone/")
-async def send_phone_verify(phone: str):
+@router.post("/send/sms/")
+async def send_sms_verify(phone: str):
     SERVICE_ID = os.getenv("TWILIO_SERVICE_SID", "")
     AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
     ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")

@@ -38,6 +38,9 @@ services:
       - POSTGRES_USER
       - POSTGRES_DB
       - POSTGRES_TEST_DB
+      - SMTP_USERNAME
+      - SMTP_PASSWORD
+      - SMTP_SERVER
     depends_on:
       db:
         condition: service_healthy
