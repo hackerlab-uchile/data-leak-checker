@@ -3,10 +3,15 @@ import random
 
 import requests
 from core.config import SMTP_PASSWORD, SMTP_SERVER, SMTP_USERNAME
-from fastapi import APIRouter
+from core.database import get_db
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+from models.data_type import DataType
+from models.verification_code import VerificationCode
 from pydantic import EmailStr
+from schemas.verification_code import VerificationCodeShow
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -38,7 +43,7 @@ def generate_random_code() -> int:
 
 
 @router.post("/send/email/")
-async def send_email_verify(email: EmailStr):
+async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
     random_code = generate_random_code()
     html = f"""<p>¡Hola! A continuación, puedes ver tu código de verificación. ¡No lo compartas!</p>
     <p><b>{random_code}</b></p>
@@ -51,11 +56,46 @@ async def send_email_verify(email: EmailStr):
         subtype=MessageType.html,
     )
     conf = get_mail_conf()
-    if conf:
+    dtype = db.query(DataType).filter(DataType.name == "email").first()
+    if conf and dtype:
         fm = FastMail(conf)
         await fm.send_message(message)
+        vcode = VerificationCode(
+            code=random_code, associated_value=email, data_type_id=dtype.id
+        )
+        # TODO: Revisar antes si ya existe. Si existe borrarlo y agregar este nuevo
+        db.add(vcode)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     return JSONResponse(status_code=503, content={"message": "Servicio no disponible"})
+
+
+@router.post("/code/email/")
+async def verify_code_email(verification_code: VerificationCodeShow):
+    if verify_code(verification_code):
+        code = verification_code.code
+        return JSONResponse(
+            status_code=200, content={"message": "Code verification successful"}
+        )
+    return JSONResponse(
+        status_code=404, content={"message": "Invalid verification code"}
+    )
+
+
+def verify_code(vcode: VerificationCodeShow, db: Session = Depends(get_db)) -> bool:
+    code = vcode.code
+    associated_value = vcode.associated_value
+    result = (
+        db.query(VerificationCode)
+        .filter(
+            VerificationCode.code == code,
+            VerificationCode.associated_value == associated_value,
+        )
+        .first()
+    )
+    if result:
+        return True
+    else:
+        return False
 
 
 @router.post("/send/sms/")
