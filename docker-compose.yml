@@ -41,6 +41,8 @@ services:
       - SMTP_USERNAME
       - SMTP_PASSWORD
       - SMTP_SERVER
+      - JWT_SECRET
+      - JWT_ALGORITHM
     depends_on:
       db:
         condition: service_healthy
