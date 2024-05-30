@@ -1,23 +1,26 @@
-import os
-import random
 from datetime import datetime, timedelta, timezone
 
 import requests
 from auth.auth_handler import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token
-from core.config import SMTP_PASSWORD, SMTP_SERVER, SMTP_USERNAME
+from core.config import (
+    SMTP_PASSWORD,
+    SMTP_SERVER,
+    SMTP_USERNAME,
+    TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN,
+    TWILIO_SENDER_NUMBER,
+)
 from core.database import get_db
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from models.data_type import DataType
 from pydantic import EmailStr
 from repositories.verification_code_repository import (
     delete_verification_code,
+    generate_new_verification_code,
     get_verification_code,
-    get_verification_code_by_value_and_data_type,
-    save_verification_code,
 )
-from schemas.verification_code import VerificationCodeCreate, VerificationCodeShow
+from schemas.verification_code import VerificationCodeShow
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -45,17 +48,12 @@ def get_mail_conf() -> ConnectionConfig | None:
     return None
 
 
-def generate_random_code() -> int:
-    return random.randrange(100_000, 1_000_000)
-
-
 @router.post("/send/email/")
 async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
-    random_code = generate_random_code()
+    vcode = generate_new_verification_code(value=email, dtype_name="email", db=db)
     html = f"""<p>¡Hola! A continuación, puedes ver tu código de verificación. ¡No lo compartas!</p>
-    <p><b>{random_code}</b></p>
+    <p><b>{vcode.code}</b></p>
     """
-
     message = MessageSchema(
         subject="Verificación de correo electrónico",
         recipients=[email],
@@ -63,33 +61,36 @@ async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
         subtype=MessageType.html,
     )
     conf = get_mail_conf()
-    # TODO: Construir una dependecy que me entregue el email dtype
-    dtype = db.query(DataType).filter(DataType.name == "email").first()
-    if conf and dtype:
+    if conf:
         fm = FastMail(conf)
         await fm.send_message(message)
-        vcode = VerificationCodeCreate(
-            code=random_code, associated_value=email, data_type_id=dtype.id
-        )
-        # If already exists, we delete it
-        old_vcode = get_verification_code_by_value_and_data_type(db, email, dtype.id)
-        if old_vcode:
-            delete_verification_code(db, old_vcode)
-        save_verification_code(db=db, vcode=vcode)
-
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     return JSONResponse(status_code=503, content={"message": "Servicio no disponible"})
 
 
-@router.post("/code/email/")
-async def verify_code_email(
+@router.post("/send/sms/")
+async def send_sms_verify(phone: str, db: Session = Depends(get_db)):
+    # TODO: Verificar que es un número de teléfono válido (número chileno nomás?)
+    vcode = generate_new_verification_code(value=phone, dtype_name="phone", db=db)
+    msg = f"Su código de verificación: {vcode.code}. ¡No lo compartas!"
+    url = (
+        f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"
+    )
+    data = {"From": TWILIO_SENDER_NUMBER, "To": "+56965672517", "Body": msg}
+    auth = (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    response = requests.post(url, data=data, auth=auth)
+    if response.status_code == 201:
+        return JSONResponse(status_code=200, content={"message": "Sms has been sent"})
+    return JSONResponse(status_code=400, content={"message": "Sms was not sent"})
+
+
+@router.post("/code/")
+async def verify_code(
     verification_code: VerificationCodeShow, db: Session = Depends(get_db)
 ):
     vcode = get_verification_code(verification_code, db)
     if vcode:
-        token = create_jwt_token(
-            value=vcode.associated_value, dtype=vcode.data_type.name
-        )
+        token = create_jwt_token(vcode.associated_value, vcode.data_type.name)
         delete_verification_code(db, vcode)
         response = JSONResponse(
             status_code=200, content={"message": "Code verification successful"}
@@ -107,36 +108,3 @@ async def verify_code_email(
     return JSONResponse(
         status_code=404, content={"message": "Invalid verification code"}
     )
-
-
-@router.post("/send/sms/")
-async def send_sms_verify(phone: str):
-    SERVICE_ID = os.getenv("TWILIO_SERVICE_SID", "")
-    AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-    ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
-    url = f"https://verify.twilio.com/v2/Services/{SERVICE_ID}/Verifications"
-    data = {"To": "+56965672517", "Channel": "sms"}
-    auth = (ACCOUNT_SID, AUTH_TOKEN)
-    response = requests.post(url, data=data, auth=auth)
-    print("---> Status code:", response.status_code)
-    return response.json()
-
-
-@router.post("/phone/code/")
-async def verify_phone_code(code: str):
-    SERVICE_ID = os.getenv("TWILIO_SERVICE_SID", "")
-    AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-    ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
-    url = f"https://verify.twilio.com/v2/Services/{SERVICE_ID}/VerificationCheck"
-    data = {"To": "+56965672517", "Code": code}
-    auth = (ACCOUNT_SID, AUTH_TOKEN)
-    response = requests.post(url, data=data, auth=auth)
-    content = response.json()
-    if response.status_code == 200:
-        if content.get("valid"):
-            print("Valid Code!")
-        else:
-            print("Code not valid :c")
-    else:
-        print("Oops, something went wrong!")
-    return content

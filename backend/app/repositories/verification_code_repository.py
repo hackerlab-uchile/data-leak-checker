@@ -1,6 +1,40 @@
+import random
+from datetime import timedelta
+from typing import Literal
+
 from models.verification_code import VerificationCode
+from repositories.data_type_repository import get_data_type_by_name
 from schemas.verification_code import VerificationCodeCreate, VerificationCodeShow
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+
+def generate_random_code() -> int:
+    return random.randrange(100_000, 1_000_000)
+
+
+def generate_new_verification_code(
+    value: str, dtype_name: Literal["email", "phone"], db: Session
+) -> VerificationCode:
+    random_code = generate_random_code()
+    dtype = get_data_type_by_name(db=db, name=dtype_name)
+    if dtype is None:
+        raise Exception(f"No existe DataType con name={dtype_name}")
+    old_code = get_verification_code_by_value_and_data_type(db, value, dtype.id)
+    if old_code:
+        delete_verification_code(db, old_code)
+    new_code = VerificationCodeCreate(
+        code=random_code, associated_value=value, data_type_id=dtype.id
+    )
+    return save_verification_code(db=db, vcode=new_code)
+
+
+def delete_expired_verification_codes(db: Session) -> None:
+    expire_delta = timedelta(minutes=1)
+    db.query(VerificationCode).filter(
+        VerificationCode.created_at + expire_delta < func.now()
+    ).delete()
+    db.commit()
 
 
 def get_verification_code_by_value_and_data_type(
