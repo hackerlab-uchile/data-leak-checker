@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 import requests
 from auth.auth_handler import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token
 from core.config import (
+    DEV_RECEIVER_NUMBER,
+    IN_PROD,
     SMTP_PASSWORD,
     SMTP_SERVER,
     SMTP_USERNAME,
@@ -20,6 +22,7 @@ from repositories.verification_code_repository import (
     generate_new_verification_code,
     get_verification_code,
 )
+from schemas.custom_fields import ChileanMobileNumber
 from schemas.verification_code import VerificationCodeShow
 from sqlalchemy.orm import Session
 
@@ -69,14 +72,16 @@ async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
 
 
 @router.post("/send/sms/")
-async def send_sms_verify(phone: str, db: Session = Depends(get_db)):
-    # TODO: Verificar que es un número de teléfono válido (número chileno nomás?)
+async def send_sms_verify(phone: ChileanMobileNumber, db: Session = Depends(get_db)):
     vcode = generate_new_verification_code(value=phone, dtype_name="phone", db=db)
     msg = f"Su código de verificación: {vcode.code}. ¡No lo compartas!"
     url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"
     )
-    data = {"From": TWILIO_SENDER_NUMBER, "To": "+56965672517", "Body": msg}
+    receiver_number = DEV_RECEIVER_NUMBER
+    if IN_PROD.lower() == "true":
+        receiver_number = phone
+    data = {"From": TWILIO_SENDER_NUMBER, "To": receiver_number, "Body": msg}
     auth = (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     response = requests.post(url, data=data, auth=auth)
     if response.status_code == 201:
