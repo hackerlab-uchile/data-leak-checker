@@ -3,7 +3,7 @@ from typing import List
 
 from auth.auth_handler import get_jwt_token
 from core.database import get_db
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from models.breach import Breach
 from models.breach_data import BreachData
 from models.data_leak import DataLeak
@@ -24,10 +24,10 @@ def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
     hash_value = get_hash(payload.value)
     dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
     if dtype is None:
-        # TODO: Throw error
-        # TODO: Se puede hacer una dependency, que entregue el dtype correspondiente
-        # TODO: Cómo se hacía una dependecy? xd
-        return []
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid data type {payload.dtype}",
+        )
     found_breaches = (
         db.query(DataLeak)
         .join(Breach, Breach.id == DataLeak.breach_id)
@@ -38,35 +38,8 @@ def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
     return found_breaches
 
 
-# @router.post("/data/demo/", response_model=List[DataLeakShow])
-def get_breaches_demo(payload: DataLeakInput, db: Session = Depends(get_db)):
-    """Returns information about random data breaches. For demo purposes"""
-    if payload.dtype == "email" and not looks_like_email(payload.value):
-        return []
-    elif payload.dtype == "rut" and not payload.value.isnumeric():
-        return []
-    rand_dl = (
-        db.query(DataLeak)
-        .join(DataType)
-        .filter(DataType.name == payload.dtype)
-        .order_by(func.random())
-        .first()
-    )
-    if rand_dl is None or payload.dtype == "phone":
-        # Por fines de demostración, consultar por teléfonos no entregará filtración
-        return []
-    found_breaches = (
-        db.query(DataLeak)
-        .join(Breach, Breach.id == DataLeak.breach_id)
-        .filter(DataLeak.hash_value == rand_dl.hash_value)
-        .filter(DataLeak.data_type_id == rand_dl.data_type_id)
-        .order_by(desc(Breach.breach_date))
-    ).all()
-    return found_breaches
-
-
 @router.post("/data/demo/", response_model=List[DataLeakShow])
-def get_breaches_demo2(payload: DataLeakInput, db: Session = Depends(get_db)):
+def get_breaches_demo(payload: DataLeakInput, db: Session = Depends(get_db)):
     """Returns information about random data breaches. For demo purposes"""
     dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
     if payload.dtype == "email" and not looks_like_email(payload.value):

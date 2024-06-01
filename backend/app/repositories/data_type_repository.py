@@ -1,10 +1,11 @@
-from models.breach_data import BreachData
+from core.database import get_db
+from fastapi import Depends
 from models.data_type import DataType
 from sqlalchemy.orm import Session
 
 
-def get_data_type_by_name(db: Session, name: str) -> DataType | None:
-    item = db.query(DataType).filter(DataType.name == name).one_or_none()
+def get_data_type_by_name(name: str, db: Session = Depends(get_db)) -> DataType | None:
+    item = db.query(DataType).filter(DataType.name == name).first()
     return item
 
 
@@ -22,11 +23,3 @@ def get_only_key_types(db: Session) -> list[DataType]:
 def get_all_data_types_in_name_list(db: Session, names: list[str]) -> list[DataType]:
     items = db.query(DataType).filter(DataType.name.in_(names)).all()
     return items
-
-
-def save_breach_data(db: Session, **kwargs):
-    db_item = BreachData(**kwargs)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item

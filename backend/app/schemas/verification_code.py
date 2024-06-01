@@ -1,17 +1,20 @@
-from typing import Literal
-
-from pydantic import BaseModel, PositiveInt
+from models.verification_code import CODE_LENGTH
+from pydantic import BaseModel, Field, PositiveInt
 
 
 class VerificationCodeBase(BaseModel):
-    code: PositiveInt
+    code: str = Field(max_length=CODE_LENGTH)
 
 
 class VerificationCodeCreate(VerificationCodeBase):
-    associated_value: str
-    data_type_id: int
+    user_id: PositiveInt
+
+
+class VerificationCodeInput(VerificationCodeBase):
+    value: str
+    dtype: str
 
 
 class VerificationCodeShow(VerificationCodeBase):
-    associated_value: str
-    dtype: Literal["email", "phone"]
+    value: str = Field(validation_alias="associated_value")
+    dtype: str = Field(validation_alias="value_type")

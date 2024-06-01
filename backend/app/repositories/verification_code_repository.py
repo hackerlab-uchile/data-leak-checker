@@ -1,31 +1,33 @@
-import random
+import secrets
 from datetime import timedelta
-from typing import Literal
 
-from models.verification_code import VerificationCode
-from repositories.data_type_repository import get_data_type_by_name
-from schemas.verification_code import VerificationCodeCreate, VerificationCodeShow
-from sqlalchemy import func
+from models.user import User
+from models.verification_code import CODE_EXPIRE_MINUTES, CODE_LENGTH, VerificationCode
+from pydantic import PositiveInt
+from schemas.verification_code import (
+    VerificationCodeCreate,
+    VerificationCodeInput,
+    VerificationCodeShow,
+)
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import false
 
 
-def generate_random_code() -> int:
-    return random.randrange(100_000, 1_000_000)
+def generate_random_code() -> str:
+    """Returns a random 6-digit sequence of numbers"""
+    n = CODE_LENGTH
+    output = ""
+    for _ in range(n):
+        output += str(secrets.choice(range(0, 10)))
+    return output
 
 
 def generate_new_verification_code(
-    value: str, dtype_name: Literal["email", "phone"], db: Session
+    user_id: PositiveInt, db: Session
 ) -> VerificationCode:
-    random_code = generate_random_code()
-    dtype = get_data_type_by_name(db=db, name=dtype_name)
-    if dtype is None:
-        raise Exception(f"No existe DataType con name={dtype_name}")
-    old_code = get_verification_code_by_value_and_data_type(db, value, dtype.id)
-    if old_code:
-        delete_verification_code(db, old_code)
-    new_code = VerificationCodeCreate(
-        code=random_code, associated_value=value, data_type_id=dtype.id
-    )
+    random_code: str = generate_random_code()
+    new_code = VerificationCodeCreate(code=random_code, user_id=user_id)
     return save_verification_code(db=db, vcode=new_code)
 
 
@@ -37,29 +39,37 @@ def delete_expired_verification_codes(db: Session) -> None:
     db.commit()
 
 
-def get_verification_code_by_value_and_data_type(
+def get_valid_verification_code_by_value_and_data_type(
     db: Session, value: str, data_type_id: int
 ) -> VerificationCode | None:
-    return (
+    candidate = (
         db.query(VerificationCode)
+        .join(User)
+        .filter(User.value == value, User.data_type_id == data_type_id)
         .filter(
-            VerificationCode.associated_value == value,
-            VerificationCode.data_type_id == data_type_id,
+            VerificationCode.created_at + timedelta(minutes=CODE_EXPIRE_MINUTES)
+            > func.now()
         )
+        .order_by(desc(VerificationCode.created_at))
         .first()
     )
+    if candidate:
+        return candidate
+    return None
 
 
 def get_verification_code(
-    vcode: VerificationCodeShow, db: Session
+    vcode: VerificationCodeInput, db: Session
 ) -> VerificationCode | None:
     code = vcode.code
-    associated_value = vcode.associated_value
+    associated_value = vcode.value
     result = (
         db.query(VerificationCode)
+        .join(User, User.id == VerificationCode.user_id)
         .filter(
             VerificationCode.code == code,
-            VerificationCode.associated_value == associated_value,
+            VerificationCode.used == false(),
+            User.value == associated_value,
         )
         .first()
     )
@@ -81,4 +91,9 @@ def save_verification_code(
 def delete_verification_code(db: Session, vcode: VerificationCode) -> None:
     db_item = vcode
     db.delete(db_item)
+    db.commit()
+
+
+def mark_verification_code_as_used(vcode: VerificationCode, db: Session) -> None:
+    vcode.used = True
     db.commit()
