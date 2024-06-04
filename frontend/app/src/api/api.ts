@@ -48,3 +48,33 @@ export async function getDataLeaksByValueAndTypeReal(
     }
   }
 }
+
+export async function sendVerificationEmail(query: string): Promise<string> {
+  let response;
+  const data = { email: query };
+  try {
+    response = await apiClient.post(`/verify/send/email/`, data);
+    return "";
+  } catch (error: any) {
+    if (error.response && error.response.status === 422) {
+      return "El formato del correo ingresado no es válido. Por favor, inténtelo de nuevo";
+    } else {
+      return "Ha ocurrido un error. Por favor, inténtelo más tarde";
+    }
+  }
+}
+
+export async function sendVerificationSMS(query: string): Promise<string> {
+  let response;
+  const data = { phone: query };
+  try {
+    response = await apiClient.post(`/verify/send/sms/`, data);
+    return "";
+  } catch (error: any) {
+    if (error.response && error.response.status === 422) {
+      return "El formato del número móvil ingresado no es válido. Por favor, inténtelo de nuevo";
+    } else {
+      return "Ha ocurrido un error. Por favor, inténtelo más tarde";
+    }
+  }
+}

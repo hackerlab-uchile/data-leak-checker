@@ -13,10 +13,10 @@ from core.config import (
     TWILIO_SENDER_NUMBER,
 )
 from core.database import get_db
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 from repositories.data_type_repository import get_data_type_by_name
 from repositories.user import get_user_or_create
 from repositories.verification_code_repository import (
@@ -25,10 +25,27 @@ from repositories.verification_code_repository import (
     mark_verification_code_as_used,
 )
 from schemas.custom_fields import ChileanMobileNumber
-from schemas.verification_code import VerificationCodeInput, VerificationCodeShow
+from schemas.verification_code import VerificationCodeInput
 from sqlalchemy.orm import Session
 
 router = APIRouter()
+
+
+class PhoneBody(BaseModel):
+    phone: ChileanMobileNumber
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "phone": "+56912345678",
+                }
+            ]
+        }
+    }
+
+
+class EmailBody(BaseModel):
+    email: EmailStr
 
 
 def get_mail_conf() -> ConnectionConfig | None:
@@ -52,7 +69,10 @@ def get_mail_conf() -> ConnectionConfig | None:
 
 
 @router.post("/send/email/")
-async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
+async def send_email_verify(
+    background_task: BackgroundTasks, payload: EmailBody, db: Session = Depends(get_db)
+):
+    email = payload.email
     email_dtype = get_data_type_by_name(name="email", db=db)
     if email_dtype is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -70,13 +90,15 @@ async def send_email_verify(email: EmailStr, db: Session = Depends(get_db)):
     conf = get_mail_conf()
     if conf:
         fm = FastMail(conf)
-        await fm.send_message(message)
+        # await fm.send_message(message)
+        background_task.add_task(fm.send_message, message)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     return JSONResponse(status_code=503, content={"message": "Service unavailable"})
 
 
 @router.post("/send/sms/")
-async def send_sms_verify(phone: ChileanMobileNumber, db: Session = Depends(get_db)):
+async def send_sms_verify(payload: PhoneBody, db: Session = Depends(get_db)):
+    phone = payload.phone
     phone_dtype = get_data_type_by_name(name="phone_dtype", db=db)
     if phone_dtype is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -116,7 +138,7 @@ async def verify_code(
         value=token,
         expires=datetime.now(timezone.utc)
         + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        secure=True,  # Put on false, for development purposes
+        secure=True,  # Use false for development purposes
         httponly=True,
         samesite="strict",
     )

@@ -7,7 +7,6 @@ from pydantic import PositiveInt
 from schemas.verification_code import (
     VerificationCodeCreate,
     VerificationCodeInput,
-    VerificationCodeShow,
 )
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
