@@ -12,14 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
-import {
-  FormEvent,
-  JSXElementConstructor,
-  Suspense,
-  useEffect,
-  useState,
-} from "react";
-import { Breach, DataLeak } from "@/models/Breach";
+import { FormEvent, useEffect, useState } from "react";
+import { DataLeak } from "@/models/Breach";
 import { getDataLeaksByValueAndType, QueryType } from "@/api/api";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdOutlineSecurity } from "react-icons/md";
@@ -40,6 +34,9 @@ import {
 } from "@/components/breaches/columns";
 import { LuMailWarning } from "react-icons/lu";
 import { Loader2 } from "lucide-react";
+import BreachCard from "@/components/BreachCard";
+import AlertMessage from "@/components/AlertMessage";
+import { safetyTips } from "@/utils/webSafetyTips";
 
 const redColor = "#ED342F";
 
@@ -151,29 +148,6 @@ export default function Home() {
     },
   ];
 
-  const safeTips: { title: string; value: string }[] = [
-    {
-      title: "Consulta frecuentemente",
-      value:
-        "Recuerda revisar con cierta frecuencia el sitio, pues que ahora no hayas aparecido en una filtración, no quiere decir que no vayas a estar en un futuro.",
-    },
-    {
-      title: "No reutilices contraseñas",
-      value:
-        "Recuerda no repetir tus contraseñas para más de una cuenta. Pues si se filtra una de ellas, podrán acceder a las demás.",
-    },
-    {
-      title: "Mantente alerta sobre posibles estafas o fraudes",
-      value:
-        "Recuerda NO abrir enlaces que te lleguen por correo o por mensajes de texto.",
-    },
-    {
-      title: "Nunca des tu contraseña",
-      value:
-        "Recuerda que existen estafadores que se pueden hacer pasar por entitades en las cuáles confías (como bancos, isapres, tiendas, etc), que intentarán pedirte tu contraseña. ¡No la entregues!",
-    },
-  ];
-
   function clearSearchIput() {
     setSearchEmail("");
     setSearchPhone("");
@@ -263,7 +237,7 @@ export default function Home() {
                                 className="self-center"
                               />
                               <AlertMessage
-                                boxColor="bg-red-hackerlab"
+                                variant="danger"
                                 message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
                               />
                             </IconContext.Provider>
@@ -284,7 +258,7 @@ export default function Home() {
                               className="self-center text-green-hackerlab"
                             />
                             <AlertMessage
-                              boxColor="bg-green-hackerlab"
+                              variant="safe"
                               message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
                             />
                             <div className="p-3 my-5 flex flex-col justify-center w-full sm:w-[90%] border rounded-md border-cyan-400">
@@ -292,7 +266,7 @@ export default function Home() {
                                 <FcIdea className="mt-1"></FcIdea>
                                 Recomendaciones de seguridad
                               </h3>
-                              {safeTips.map((tip, index) => (
+                              {safetyTips.map((tip, index) => (
                                 <div
                                   className="ml-3 items-start flex flex-row gap-1 text-lg"
                                   key={index}
@@ -349,55 +323,6 @@ export default function Home() {
 
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left"></div>
     </main>
-  );
-}
-
-function BreachCard({ breach, index }: { breach: Breach; index: number }) {
-  return (
-    <div
-      id={`${index}`}
-      className="flex flex-col items-start my-1 p-4 border rounded-lg w-full"
-    >
-      <h3 className="font-bold text-xl">
-        {`${breach.name} (${breach.breach_date.slice(0, 4)})`}
-      </h3>
-      <p>{breach.description}</p>
-      <p>
-        <b>Tipos de datos encontrados: </b>
-        {breach.breached_data.join(", ")}
-      </p>
-      <p className="font-bold self-center pt-2 underline">
-        Consejos de seguridad
-      </p>
-      <div className="flex flex-col">
-        {breach.security_tips.map((tip, index) => (
-          <div className="ml-3 flex flex-row items-start gap-1" key={index}>
-            {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
-            <AiOutlineSafety
-              className="shrink-0 mt-1"
-              color="green"
-            ></AiOutlineSafety>
-            <>{tip}</>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AlertMessage({
-  message,
-  boxColor,
-}: {
-  message: string;
-  boxColor: string;
-}) {
-  return (
-    <div
-      className={`flex px-3 rounded-md justify-center text-white ${boxColor} w-[90%]`}
-    >
-      <p className="text-xl text-center">{message}</p>
-    </div>
   );
 }
 

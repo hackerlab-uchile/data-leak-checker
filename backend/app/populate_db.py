@@ -41,6 +41,19 @@ def populate_dummy_data():
             id=11, name="birthdate", display_name="Fecha de nacimiento"
         ),
         "username": DataType(id=12, name="username", display_name="Nombre de usuario"),
+        "download_records": DataType(
+            id=13, name="download_records", display_name="Historial de descargas"
+        ),
+        "gender": DataType(id=14, name="gender", display_name="Género"),
+        "locations": DataType(
+            id=15, name="locations", display_name="Ubicaciones de uso"
+        ),
+        "private_msgs": DataType(
+            id=16, name="private_msgs", display_name="Mensajes privados"
+        ),
+        "profile_picture": DataType(
+            id=17, name="profile_picture", display_name="Foto de perfil"
+        ),
     }
     session.add_all(list(data_types.values()))
     session.commit()
@@ -163,6 +176,38 @@ def populate_dummy_data():
                 data_types["ip_address"],
             ],
         ),
+        Breach(
+            id=9,
+            name="The Pirate Bay",
+            description="The Pirate Bay, el famoso sitio web de intercambio de archivos, anunció una grave filtración de datos que afectó a su base de usuarios. La brecha de seguridad, descubierta el 3 de julio de 2021, comprometió la información de millones de usuarios registrados entre enero y junio de ese mismo año. Los datos filtrados incluyen nombres de usuario, direcciones de correo electrónico, contraseñas cifradas, direcciones IP y detalles de las descargas realizadas.",
+            breach_date="2021-07-03",
+            confirmed=True,
+            is_sensitive=True,
+            data_breached=[
+                data_types["username"],
+                data_types["email"],
+                data_types["password"],
+                data_types["ip_address"],
+                data_types["download_records"],
+            ],
+        ),
+        Breach(
+            id=10,
+            name="Tinder",
+            description="La popular aplicación de citas Tinder anunció el descubrimiento de una filtración de datos que afectó a su base de usuarios. La brecha de seguridad, detectada el 8 de marzo del 2024, comprometió la información personal de millones de usuarios que utilizaron la plataforma entre noviembre de 2023 y febrero de 2024. Los datos filtrados incluyen nombres, edades, número móvil, ubicaciones, géneros, mensajes privados y fotos de perfil.",
+            breach_date="2024-03-10",
+            confirmed=True,
+            is_sensitive=True,
+            data_breached=[
+                data_types["phone"],
+                data_types["name"],
+                data_types["birthdate"],
+                data_types["locations"],
+                data_types["gender"],
+                data_types["private_msgs"],
+                data_types["profile_picture"],
+            ],
+        ),
     ]
     session.add_all(breaches)
     session.commit()
@@ -233,6 +278,30 @@ def populate_dummy_data():
                 data_types["credit_card"],
                 data_types["rut"],
                 data_types["name"],
+            ],
+        ),
+        DataLeak(
+            id=7,
+            hash_value=get_hash("nico@example.com"),
+            data_type=data_types["email"],
+            breach_id=9,
+            found_with=[
+                data_types["password"],
+                data_types["ip_address"],
+                data_types["download_records"],
+            ],
+        ),
+        DataLeak(
+            id=8,
+            hash_value=get_hash("+56912345678"),
+            data_type=data_types["phone"],
+            breach_id=10,
+            found_with=[
+                data_types["name"],
+                data_types["birthdate"],
+                data_types["locations"],
+                data_types["private_msgs"],
+                data_types["profile_picture"],
             ],
         ),
     ]

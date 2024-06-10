@@ -35,7 +35,7 @@ export function LeaksTable<TData, TValue>({
 
   return (
     <div>
-      <h2 className="text-center font-bold">DATOS COMPROMETIDOS</h2>
+      <h2 className="text-center font-bold">TUS DATOS COMPROMETIDOS</h2>
       <Simbologia />
       <div className="rounded-md border">
         <Table>

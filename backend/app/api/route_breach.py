@@ -110,3 +110,38 @@ def get_sensitive_breaches(
         .order_by(desc(Breach.breach_date))
     ).all()
     return found_breaches
+
+
+@router.get("/sensitive/data/demo/", response_model=List[DataLeakShow])
+def get_sensitive_breaches_demo(
+    payload: TokenPayload = Depends(get_jwt_token), db: Session = Depends(get_db)
+):
+    """Returns information about SENSITIVE data breaches related to a value and type"""
+    dtype = db.query(DataType).filter(DataType.name == payload.dtype).first()
+    if dtype is None:
+        # TODO: Throw error
+        # TODO: Se puede hacer una dependency, que entregue el dtype correspondiente
+        # TODO: Cómo se hacía una dependecy? xd
+        return []
+    n_limit = random.randint(2, 5)
+    rand_breaches = (
+        db.query(Breach)
+        .join(BreachData)
+        .filter(BreachData.data_type_id == dtype.id, Breach.is_sensitive == true())
+        .order_by(func.random())
+        .limit(n_limit)
+        .all()
+    )
+    rand_breaches.sort(key=lambda x: str(x.breach_date), reverse=True)
+    found_breaches: List[DataLeak] = []
+    for breach in rand_breaches:
+        dl = DataLeak()
+        dl.data_type = dtype
+        dl.breach_found = breach
+        n_found = len(breach.data_breached)
+        roll = random.randint(max(0, n_found - 2), n_found)
+        picks = random.sample(breach.data_breached, k=roll)
+        found_with = set([dtype, *picks])
+        dl.found_with = list(found_with)
+        found_breaches.append(dl)
+    return found_breaches

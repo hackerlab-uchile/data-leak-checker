@@ -1,4 +1,5 @@
 import { DataLeak } from "@/models/Breach";
+import { ErrorMsg } from "@/models/ErrorMsg";
 import apiClient from "@/utils/axios";
 
 export enum QueryType {
@@ -76,5 +77,60 @@ export async function sendVerificationSMS(query: string): Promise<string> {
     } else {
       return "Ha ocurrido un error. Por favor, inténtelo más tarde";
     }
+  }
+}
+
+export async function verifyCode(
+  code: string,
+  value: string,
+  type: QueryType
+): Promise<[boolean, string]> {
+  let response;
+  const data = { code: code, value: value, dtype: type };
+  try {
+    response = await apiClient.post(`/verify/code/`, data, {
+      withCredentials: true,
+    });
+    let isValid = response.data.valid;
+    console.log("Response: ", isValid);
+    return [isValid, ""];
+  } catch (error: any) {
+    return [false, "Ha ocurrido un error. Por favor, inténtelo más tarde"];
+  }
+}
+
+export async function getSensitiveDataLeaks(): Promise<[DataLeak[], ErrorMsg]> {
+  let response;
+  let errorMsg: ErrorMsg = { statusCode: 200, message: "" };
+  try {
+    response = await apiClient.get<DataLeak[]>("/breach/sensitive/data/", {
+      withCredentials: true,
+    });
+    return [response.data, errorMsg];
+  } catch (error: any) {
+    if (error.response) {
+      errorMsg.statusCode = error.response.status;
+    }
+    errorMsg.message = "Credenciales inválidas";
+    return [[], errorMsg];
+  }
+}
+
+export async function getSensitiveDataLeaksDemo(): Promise<
+  [DataLeak[], ErrorMsg]
+> {
+  let response;
+  let errorMsg: ErrorMsg = { statusCode: 200, message: "" };
+  try {
+    response = await apiClient.get<DataLeak[]>("/breach/sensitive/data/demo/", {
+      withCredentials: true,
+    });
+    return [response.data, errorMsg];
+  } catch (error: any) {
+    if (error.response) {
+      errorMsg.statusCode = error.response.status;
+    }
+    errorMsg.message = "Credenciales inválidas";
+    return [[], errorMsg];
   }
 }

@@ -21,7 +21,7 @@ from repositories.data_type_repository import get_data_type_by_name
 from repositories.user import get_user_or_create
 from repositories.verification_code_repository import (
     generate_new_verification_code,
-    get_verification_code,
+    get_valid_verification_code_if_correct,
     mark_verification_code_as_used,
 )
 from schemas.custom_fields import ChileanMobileNumber
@@ -99,9 +99,9 @@ async def send_email_verify(
 @router.post("/send/sms/")
 async def send_sms_verify(payload: PhoneBody, db: Session = Depends(get_db)):
     phone = payload.phone
-    phone_dtype = get_data_type_by_name(name="phone_dtype", db=db)
+    phone_dtype = get_data_type_by_name(name="phone", db=db)
     if phone_dtype is None:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     user = get_user_or_create(value=phone, data_type_id=phone_dtype.id, db=db)
     vcode = generate_new_verification_code(user_id=user.id, db=db)
     msg = f"Su código de verificación: {vcode.code}. ¡No lo compartas!"
@@ -123,22 +123,27 @@ async def send_sms_verify(payload: PhoneBody, db: Session = Depends(get_db)):
 async def verify_code(
     verification_code: VerificationCodeInput, db: Session = Depends(get_db)
 ):
-    vcode = get_verification_code(verification_code, db)
+    # vcode = get_verification_code(verification_code, db)
+    vcode = get_valid_verification_code_if_correct(verification_code, db)
     if vcode is None:
         return JSONResponse(
-            status_code=404, content={"message": "Invalid verification code"}
+            status_code=200,
+            content={"message": "Invalid verification code", "valid": False},
         )
     token = create_jwt_token(vcode.associated_value, vcode.value_type)
     mark_verification_code_as_used(vcode=vcode, db=db)
     response = JSONResponse(
-        status_code=200, content={"message": "Code verification successful"}
+        status_code=200,
+        content={"message": "Code verification successful", "valid": True},
     )
     response.set_cookie(
         key="token",
         value=token,
         expires=datetime.now(timezone.utc)
         + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        secure=True,  # Use false for development purposes
+        secure=True
+        if IN_PROD.lower() == "true"
+        else False,  # Use false for development purposes
         httponly=True,
         samesite="strict",
     )

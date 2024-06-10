@@ -4,6 +4,7 @@ from datetime import timedelta
 from models.user import User
 from models.verification_code import CODE_EXPIRE_MINUTES, CODE_LENGTH, VerificationCode
 from pydantic import PositiveInt
+from repositories.data_type_repository import get_data_type_by_name
 from schemas.verification_code import (
     VerificationCodeCreate,
     VerificationCodeInput,
@@ -38,13 +39,21 @@ def delete_expired_verification_codes(db: Session) -> None:
     db.commit()
 
 
-def get_valid_verification_code_by_value_and_data_type(
-    db: Session, value: str, data_type_id: int
+def get_valid_verification_code_if_correct(
+    vcode: VerificationCodeInput, db: Session
 ) -> VerificationCode | None:
+    """Returns a valid verification code if matches with the one passed as parameter.
+    Otherwise, returns None if the verification code is not valid"""
+    input_code = vcode.code
+    value = vcode.value
+    data_type_name = vcode.dtype
+    data_type = get_data_type_by_name(name=data_type_name, db=db)
+    if data_type is None:
+        return None
     candidate = (
         db.query(VerificationCode)
         .join(User)
-        .filter(User.value == value, User.data_type_id == data_type_id)
+        .filter(User.value == value, User.data_type_id == data_type.id)
         .filter(
             VerificationCode.created_at + timedelta(minutes=CODE_EXPIRE_MINUTES)
             > func.now()
@@ -52,7 +61,7 @@ def get_valid_verification_code_by_value_and_data_type(
         .order_by(desc(VerificationCode.created_at))
         .first()
     )
-    if candidate:
+    if candidate and not candidate.used and candidate.code == input_code:
         return candidate
     return None
 
