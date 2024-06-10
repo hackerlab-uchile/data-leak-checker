@@ -13,7 +13,10 @@ from core.config import (
     TWILIO_SENDER_NUMBER,
 )
 from core.database import get_db
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from dependencies.verification_code_dependency import (
+    verify_host_rate_limting,
+)
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import BaseModel, EmailStr
@@ -56,7 +59,6 @@ def get_mail_conf() -> ConnectionConfig | None:
             MAIL_FROM=SMTP_USERNAME,
             MAIL_PORT=587,
             MAIL_SERVER=SMTP_SERVER,
-            # MAIL_FROM_NAME="Verificación DataLeakChecker",
             MAIL_STARTTLS=True,
             MAIL_SSL_TLS=False,
             USE_CREDENTIALS=True,
@@ -68,16 +70,23 @@ def get_mail_conf() -> ConnectionConfig | None:
     return None
 
 
-@router.post("/send/email/")
+@router.post("/send/email/", dependencies=[Depends(verify_host_rate_limting)])
 async def send_email_verify(
-    background_task: BackgroundTasks, payload: EmailBody, db: Session = Depends(get_db)
+    background_task: BackgroundTasks,
+    payload: EmailBody,
+    request: Request,
+    db: Session = Depends(get_db),
 ):
+    if request.client is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     email = payload.email
     email_dtype = get_data_type_by_name(name="email", db=db)
     if email_dtype is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     user = get_user_or_create(value=email, data_type_id=email_dtype.id, db=db)
-    vcode = generate_new_verification_code(user_id=user.id, db=db)
+    vcode = generate_new_verification_code(
+        user_id=user.id, address=request.client.host, db=db
+    )
     html = f"""<p>¡Hola! A continuación, puedes ver tu código de verificación. ¡No lo compartas!</p>
     <p><b>{vcode.code}</b></p>
     """
@@ -90,20 +99,25 @@ async def send_email_verify(
     conf = get_mail_conf()
     if conf:
         fm = FastMail(conf)
-        # await fm.send_message(message)
         background_task.add_task(fm.send_message, message)
         return JSONResponse(status_code=200, content={"message": "email has been sent"})
     return JSONResponse(status_code=503, content={"message": "Service unavailable"})
 
 
-@router.post("/send/sms/")
-async def send_sms_verify(payload: PhoneBody, db: Session = Depends(get_db)):
+@router.post("/send/sms/", dependencies=[Depends(verify_host_rate_limting)])
+async def send_sms_verify(
+    payload: PhoneBody, request: Request, db: Session = Depends(get_db)
+):
+    if request.client is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     phone = payload.phone
     phone_dtype = get_data_type_by_name(name="phone", db=db)
     if phone_dtype is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     user = get_user_or_create(value=phone, data_type_id=phone_dtype.id, db=db)
-    vcode = generate_new_verification_code(user_id=user.id, db=db)
+    vcode = generate_new_verification_code(
+        user_id=user.id, address=request.client.host, db=db
+    )
     msg = f"Su código de verificación: {vcode.code}. ¡No lo compartas!"
     url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"

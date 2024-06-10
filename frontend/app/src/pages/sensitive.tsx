@@ -65,7 +65,7 @@ export default function SensitiveBreach() {
     <main className="flex min-h-screen flex-col items-center justify-start md:px-24 pt-2 pb-20">
       <Navbar />
       <div className="flex flex-col mt-20 w-full items-center justify-start">
-        <div className="flex flex-row self-start w-full items-center gap-x-5">
+        <div className="flex flex-col self-start w-full items-center gap-x-5">
           <h2 className="text-xl font-bold">Verificación Completada</h2>
           <p>
             A continuación se muestran los resultados sobre tus filtraciones

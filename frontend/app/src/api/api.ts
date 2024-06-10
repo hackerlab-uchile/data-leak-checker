@@ -59,6 +59,8 @@ export async function sendVerificationEmail(query: string): Promise<string> {
   } catch (error: any) {
     if (error.response && error.response.status === 422) {
       return "El formato del correo ingresado no es válido. Por favor, inténtelo de nuevo";
+    } else if (error.response && error.response.status === 429) {
+      return "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde";
     } else {
       return "Ha ocurrido un error. Por favor, inténtelo más tarde";
     }
@@ -74,6 +76,8 @@ export async function sendVerificationSMS(query: string): Promise<string> {
   } catch (error: any) {
     if (error.response && error.response.status === 422) {
       return "El formato del número móvil ingresado no es válido. Por favor, inténtelo de nuevo";
+    } else if (error.response && error.response.status === 429) {
+      return "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde";
     } else {
       return "Ha ocurrido un error. Por favor, inténtelo más tarde";
     }

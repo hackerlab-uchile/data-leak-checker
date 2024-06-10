@@ -14,6 +14,7 @@ class VerificationCode(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False)
     code: Mapped[str] = mapped_column(String(length=CODE_LENGTH), nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())
+    address: Mapped[str] = mapped_column(String, nullable=False)
     used: Mapped[bool] = mapped_column(Boolean, server_default=false())
 
     user_owner: Mapped["User"] = relationship("User", foreign_keys=[user_id])

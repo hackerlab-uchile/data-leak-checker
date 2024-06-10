@@ -23,20 +23,29 @@ def generate_random_code() -> str:
     return output
 
 
+def get_total_codes_created_by_ip_address_under_minutes(
+    ip_address: str, minutes: int, db: Session
+) -> int:
+    """Returns the total number of codes created by the same IP address under the last x minutes"""
+    total_codes_created = (
+        db.query(VerificationCode)
+        .filter(
+            VerificationCode.address == ip_address,
+            VerificationCode.created_at + timedelta(minutes=minutes) > func.now(),
+        )
+        .count()
+    )
+    return total_codes_created
+
+
 def generate_new_verification_code(
-    user_id: PositiveInt, db: Session
+    user_id: PositiveInt, address: str, db: Session
 ) -> VerificationCode:
     random_code: str = generate_random_code()
-    new_code = VerificationCodeCreate(code=random_code, user_id=user_id)
+    new_code = VerificationCodeCreate(
+        code=random_code, user_id=user_id, address=address
+    )
     return save_verification_code(db=db, vcode=new_code)
-
-
-def delete_expired_verification_codes(db: Session) -> None:
-    expire_delta = timedelta(minutes=1)
-    db.query(VerificationCode).filter(
-        VerificationCode.created_at + expire_delta < func.now()
-    ).delete()
-    db.commit()
 
 
 def get_valid_verification_code_if_correct(
@@ -105,3 +114,4 @@ def delete_verification_code(db: Session, vcode: VerificationCode) -> None:
 def mark_verification_code_as_used(vcode: VerificationCode, db: Session) -> None:
     vcode.used = True
     db.commit()
+    db.refresh(vcode)

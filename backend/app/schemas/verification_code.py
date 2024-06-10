@@ -8,6 +8,7 @@ class VerificationCodeBase(BaseModel):
 
 class VerificationCodeCreate(VerificationCodeBase):
     user_id: PositiveInt
+    address: str
 
 
 class VerificationCodeInput(VerificationCodeBase):

@@ -29,7 +29,6 @@ import CircleNumber from "@/components/CircleNumber";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
@@ -305,7 +304,7 @@ const CodeVerification = ({
     if (timeLeft > 0) return;
     if (!search || waitingResponse) {
       toast({
-        title: "Ha ocurrido un error. Por favor, recargue la página",
+        title: "Ha ocurrido un error. Por favor, refresque la página",
         variant: "destructive",
       });
       return;
@@ -317,8 +316,7 @@ const CodeVerification = ({
     setWaitingResponse(false);
     if (errorMsg !== "") {
       toast({
-        title:
-          "Ha ocurrido un error al enviar el nuevo código. Por favor, inténtelo más tarde",
+        title: errorMsg,
         variant: "destructive",
       });
     } else {
