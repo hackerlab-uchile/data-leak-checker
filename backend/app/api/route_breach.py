@@ -10,7 +10,7 @@ from models.data_leak import DataLeak
 from models.data_type import DataType
 from schemas.data_leak import DataLeakInput, DataLeakShow
 from schemas.token import TokenPayload
-from sqlalchemy import desc, true
+from sqlalchemy import desc, false, true
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 from utils.crytpography import get_hash
@@ -33,6 +33,7 @@ def get_breaches_info(payload: DataLeakInput, db: Session = Depends(get_db)):
         .join(Breach, Breach.id == DataLeak.breach_id)
         .filter(DataLeak.hash_value == hash_value)
         .filter(DataLeak.data_type_id == dtype.id)
+        .filter(Breach.is_sensitive == false())
         .order_by(desc(Breach.breach_date))
     ).all()
     return found_breaches
@@ -54,6 +55,7 @@ def get_breaches_demo(payload: DataLeakInput, db: Session = Depends(get_db)):
         db.query(Breach)
         .join(BreachData)
         .filter(BreachData.data_type_id == dtype.id)
+        .filter(Breach.is_sensitive == false())
         .order_by(func.random())
         .limit(n_limit)
         .all()
