@@ -324,7 +324,7 @@ def populate_dummy_data():
         ),
         SecurityTip(
             data_type_id=data_types["credit_card"].id,
-            description="Bloqueé su tarjeta de crédito y/o avise al banco que es posible que su tarjeta haya sido comprometida por terceros.",
+            description="Bloquee su tarjeta de crédito y/o avise al banco que es posible que su tarjeta haya sido comprometida por terceros.",
         ),
     ]
     session.add_all(security_tips)

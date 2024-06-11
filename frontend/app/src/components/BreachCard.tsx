@@ -21,21 +21,25 @@ export default function BreachCard({
         <b>Tipos de datos encontrados: </b>
         {breach.breached_data.join(", ")}
       </p>
-      <p className="font-bold self-center pt-2 underline">
-        Consejos de seguridad
-      </p>
-      <div className="flex flex-col">
-        {breach.security_tips.map((tip, index) => (
-          <div className="ml-3 flex flex-row items-start gap-1" key={index}>
-            {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
-            <AiOutlineSafety
-              className="shrink-0 mt-1"
-              color="green"
-            ></AiOutlineSafety>
-            <>{tip}</>
+      {breach.security_tips.length > 0 && (
+        <>
+          <p className="font-bold self-center pt-2 underline">
+            Consejos de seguridad
+          </p>
+          <div className="flex flex-col">
+            {breach.security_tips.map((tip, index) => (
+              <div className="ml-3 flex flex-row items-start gap-1" key={index}>
+                {/* <MdOutlineSecurity color="green"></MdOutlineSecurity> */}
+                <AiOutlineSafety
+                  className="shrink-0 mt-1"
+                  color="green"
+                ></AiOutlineSafety>
+                <>{tip}</>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }
