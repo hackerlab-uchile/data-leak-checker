@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/table";
 import { LuSearchX } from "react-icons/lu";
 import { TbShieldExclamation } from "react-icons/tb";
+import { BsShieldExclamation } from "react-icons/bs";
+import { IoWarningOutline } from "react-icons/io5";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -100,11 +102,16 @@ const Simbologia = ({}) => {
   return (
     <div className="py-3 text-sm text-muted-foreground grid grid-cols-2 sm:grid-cols-4 gap-x-1 gap-y-1 justify-items-center">
       <p className="flex flex-row items-center self-start">
-        <TbShieldExclamation
+        <BsShieldExclamation
           fontSize="1.5em"
           color="red"
           className="shrink-0 text-center self-start"
-        ></TbShieldExclamation>
+        ></BsShieldExclamation>
+        {/* <TbShieldExclamation
+          fontSize="1.5em"
+          color="red"
+          className="shrink-0 text-center self-start"
+        ></TbShieldExclamation> */}
         : Encontrado en la filtración.
       </p>
       <p className="flex flex-row items-center self-start">
@@ -112,11 +119,16 @@ const Simbologia = ({}) => {
       </p>
       <div className="col-span-2 justify-items-center flex flex-row items-center">
         <p className="flex flex-row self-start">
-          <LuSearchX
+          {/* <LuSearchX
             className="shrink-0"
             fontSize="1.5em"
             color="gray"
-          ></LuSearchX>
+          ></LuSearchX> */}
+          <IoWarningOutline
+            className="shrink-0"
+            fontSize="1.7em"
+            color="orange"
+          ></IoWarningOutline>
           :
         </p>
         <p className="ml-1 self-start">

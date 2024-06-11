@@ -3,8 +3,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { MdError } from "react-icons/md";
 import { TbShieldExclamation } from "react-icons/tb";
-import { BsExclamationLg } from "react-icons/bs";
+import {
+  BsExclamationLg,
+  BsShieldExclamation,
+  BsShieldFillExclamation,
+} from "react-icons/bs";
 import { LuSearchX, LuShieldAlert, LuShieldQuestion } from "react-icons/lu";
+import { IoWarning, IoWarningOutline } from "react-icons/io5";
 
 export type TypesLeak = {
   filtración: string;
@@ -41,7 +46,12 @@ export function getLeakTableColumns(
           return (
             <div className="flex justify-center text-center w-full">
               {/* <>No visto</> */}
-              <LuSearchX fontSize="2.0em" color="gray"></LuSearchX>
+              {/* <LuSearchX fontSize="2.0em" color="gray"></LuSearchX> */}
+              {/* <IoWarning fontSize="2.5em" color="orange"></IoWarning> */}
+              <IoWarningOutline
+                fontSize="2.3em"
+                color="orange"
+              ></IoWarningOutline>
               {/* <LuShieldQuestion
                 fontSize="2.0em"
                 color="gray"
@@ -56,11 +66,21 @@ export function getLeakTableColumns(
                 color="red"
                 className="text-center"
               ></LuShieldAlert> */}
-              <TbShieldExclamation
+              <BsShieldExclamation
                 fontSize="2em"
                 color="red"
                 className="text-center"
-              ></TbShieldExclamation>
+              ></BsShieldExclamation>
+              {/* <BsShieldFillExclamation
+                fontSize="2em"
+                color="red"
+                className="text-center"
+              ></BsShieldFillExclamation> */}
+              {/* <TbShieldExclamation
+                fontSize="2em"
+                color="red"
+                className="text-center"
+              ></TbShieldExclamation> */}
               {/* <BsExclamationLg fontSize="3em" color="red"></BsExclamationLg> */}
             </div>
           );
