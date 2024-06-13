@@ -36,6 +36,7 @@ import { GrPowerReset } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import Link from "next/link";
 
 export default function VerificationHome() {
   const [step, setStep] = useState<number>(0);
@@ -217,7 +218,7 @@ const SearchContent = ({
   return (
     // <Tabs defaultValue="email" className="w-[90%] md:w-[80%] max-w-[1280px]">
     <Tabs defaultValue="email" className="w-[90%] md:w-[80%] max-w-lg">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
         {searchKeys.map((item) => (
           <TabsTrigger
             onClick={(e) => {
@@ -230,6 +231,15 @@ const SearchContent = ({
             {item.title}
           </TabsTrigger>
         ))}
+        <TabsTrigger
+          onClick={(e) => {
+            setSearch("");
+            setInputError("");
+          }}
+          value="rut"
+        >
+          {"RUT"}
+        </TabsTrigger>
       </TabsList>
       {searchKeys.map((item) => (
         <TabsContent key={item.value} value={item.value}>
@@ -273,6 +283,29 @@ const SearchContent = ({
           </Card>
         </TabsContent>
       ))}
+      <TabsContent key="rut" value="rut">
+        <Card>
+          <CardHeader>
+            <CardTitle>RUT</CardTitle>
+            <CardDescription>
+              Para poder ver las filtraciones sensibles asociadas a un RUT en
+              particular, debe verificar su identidad mediante Clave Única.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
+              <Link
+                className="btn-cu btn-m  btn-color-estandar"
+                href="http://localhost:8000/verify/rut/"
+                title="Este es el botón Iniciar sesión de ClaveÚnica"
+              >
+                <span className="cl-claveunica"></span>
+                <span className="texto">Iniciar sesión</span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </Tabs>
   );
 };

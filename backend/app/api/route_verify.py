@@ -2,7 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 from auth.auth_handler import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from core.config import (
+    CLIENT_ID,
+    CLIENT_SECRET,
     DEV_RECEIVER_NUMBER,
     IN_PROD,
     SMTP_PASSWORD,
@@ -17,7 +20,7 @@ from dependencies.verification_code_dependency import (
     verify_host_rate_limting,
 )
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import BaseModel, EmailStr
 from repositories.data_type_repository import get_data_type_by_name
@@ -32,6 +35,19 @@ from schemas.verification_code import VerificationCodeInput
 from sqlalchemy.orm import Session
 
 router = APIRouter()
+
+
+oauth = OAuth()
+oauth.register(
+    name="google",
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    client_kwargs={
+        "scope": "openid email profile",
+        "redirect_url": "http://localhost:8000/verify/oauth/",
+    },
+)
 
 
 class PhoneBody(BaseModel):
@@ -57,6 +73,7 @@ def get_mail_conf() -> ConnectionConfig | None:
             MAIL_USERNAME=SMTP_USERNAME,
             MAIL_PASSWORD=SMTP_PASSWORD,
             MAIL_FROM=SMTP_USERNAME,
+            MAIL_FROM_NAME="Data-Leak-Checker",
             MAIL_PORT=587,
             MAIL_SERVER=SMTP_SERVER,
             MAIL_STARTTLS=True,
@@ -133,6 +150,45 @@ async def send_sms_verify(
     return JSONResponse(status_code=400, content={"message": "Sms was not sent"})
 
 
+@router.get("/rut/")
+async def verify_rut(request: Request):
+    redirect_uri = request.url_for("oauth_verification")
+    if oauth.google is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE)
+    print(f"{redirect_uri=}")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/oauth/", dependencies=[Depends(verify_host_rate_limting)])
+async def oauth_verification(request: Request):
+    if oauth.google is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE)
+    try:
+        oauth_response = await oauth.google.authorize_access_token(request)
+    except OAuthError as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # TODO:
+    # 1) Debería tomar la respuesta, generar un JWT con el RUT de respuesta
+    # 2) associated_value debería corresopdner al RUT entregado por CU
+    # 3) Entregar JWT al usuario
+    associated_value = "11111111-1"
+    token = create_jwt_token(associated_value, "rut")
+    response = RedirectResponse("http://localhost:3000/sensitive", status_code=302)
+    response.set_cookie(
+        key="token",
+        value=token,
+        expires=datetime.now(timezone.utc)
+        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        secure=True
+        if IN_PROD.lower() == "true"
+        else False,  # Use false for development purposes
+        httponly=True,
+        samesite="strict",
+    )
+    return response
+
+
 @router.post("/code/")
 async def verify_code(
     verification_code: VerificationCodeInput, db: Session = Depends(get_db)
@@ -162,3 +218,6 @@ async def verify_code(
         samesite="strict",
     )
     return response
+
+
+# TODO: HACER UN LOGOUT

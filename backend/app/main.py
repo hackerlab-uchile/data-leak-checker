@@ -5,6 +5,7 @@ from api.route_base import api_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from populate_db import populate_dummy_data
+from starlette.middleware.sessions import SessionMiddleware
 
 ROOT_ROUTE = os.getenv("ROOT_ROUTE", "")
 
@@ -25,6 +26,7 @@ def init_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    new_app.add_middleware(SessionMiddleware, secret_key="random super random string")
 
     return new_app
 
