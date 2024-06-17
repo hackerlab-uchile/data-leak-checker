@@ -16,6 +16,7 @@ class VerificationCode(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())
     address: Mapped[str] = mapped_column(String, nullable=False)
     used: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    tries: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     user_owner: Mapped["User"] = relationship("User", foreign_keys=[user_id])
 
@@ -32,4 +33,4 @@ class VerificationCode(Base):
         return ""
 
     def __repr__(self):
-        return f"VerificationCode(id={self.id}, code={self.code}, created_at={self.created_at}, user_owner={self.user_owner})"
+        return f"VerificationCode(id={self.id}, code={self.code}, created_at={self.created_at}, user_owner={self.user_owner}, used={self.used}, tries={self.tries})"

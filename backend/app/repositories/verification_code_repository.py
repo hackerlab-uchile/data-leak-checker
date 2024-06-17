@@ -70,7 +70,17 @@ def get_valid_verification_code_if_correct(
         .order_by(desc(VerificationCode.created_at))
         .first()
     )
-    if candidate and not candidate.used and candidate.code == input_code:
+    if candidate and candidate.tries < 3:
+        candidate.tries += 1
+        print(f"{candidate.tries=}")
+        db.commit()
+        db.refresh(candidate)
+    if (
+        candidate
+        and not candidate.used
+        and candidate.tries < 3
+        and candidate.code == input_code
+    ):
         return candidate
     return None
 

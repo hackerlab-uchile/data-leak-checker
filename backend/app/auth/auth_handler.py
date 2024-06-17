@@ -7,7 +7,7 @@ from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyCookie
 from schemas.token import TokenPayload
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 cookie_scheme = APIKeyCookie(
     name="token", description="Allows sensitive breaches search", auto_error=False

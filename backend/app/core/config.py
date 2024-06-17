@@ -19,3 +19,5 @@ DEV_RECEIVER_NUMBER: str = os.environ.get("DEV_RECEIVER_NUMBER", "")
 IN_PROD: str = os.environ.get("IN_PROD", "false")
 CLIENT_ID: str = os.environ.get("CLIENT_ID", "")
 CLIENT_SECRET: str = os.environ.get("CLIENT_SECRET", "")
+
+# TODO: Lanzar errores cuando no se encuentren ciertos parámetors OBLIGATORIOS
