@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import Link from "next/link";
+import { VerificationResponse } from "@/models/VerificationResponse";
 
 export default function VerificationHome() {
   const [step, setStep] = useState<number>(0);
@@ -45,6 +46,7 @@ export default function VerificationHome() {
   const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
   const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
+  const [verificationCodeLength, setVerificationCodeLength] = useState(8);
 
   useEffect(() => {
     if (dataLeaks.length > 0) {
@@ -66,6 +68,7 @@ export default function VerificationHome() {
         search={search}
         setSearch={setSearch}
         setType={setSearchType}
+        setVerificationCodeLength={setVerificationCodeLength}
       ></SearchContent>
     );
   } else if (step == 2) {
@@ -76,6 +79,7 @@ export default function VerificationHome() {
         search={search}
         setSearch={setSearch}
         searchType={searchType}
+        verificationCodeLength={verificationCodeLength}
       ></CodeVerification>
     );
   } else {
@@ -149,12 +153,14 @@ const SearchContent = ({
   search,
   setSearch,
   setType,
+  setVerificationCodeLength,
 }: {
   step: number;
   setStep: Dispatch<SetStateAction<number>>;
   search: string;
   setSearch: Dispatch<SetStateAction<string>>;
   setType: Dispatch<SetStateAction<QueryType>>;
+  setVerificationCodeLength: Dispatch<SetStateAction<number>>;
 }) => {
   const [inputError, setInputError] = useState("");
   const [waitingResponse, setWaitingResponse] = useState(false);
@@ -166,11 +172,12 @@ const SearchContent = ({
     }
     setWaitingResponse(true);
     setType(QueryType.Email);
-    let errorMsg: string = await sendVerificationEmail(search);
+    let response: VerificationResponse = await sendVerificationEmail(search);
     setWaitingResponse(false);
-    if (errorMsg !== "") {
-      setInputError(errorMsg);
+    if (response.code_length === undefined) {
+      setInputError(response.message);
     } else {
+      setVerificationCodeLength(response.code_length);
       setStep(step + 1);
     }
   }
@@ -182,11 +189,12 @@ const SearchContent = ({
     }
     setWaitingResponse(true);
     setType(QueryType.Phone);
-    let errorMsg: string = await sendVerificationSMS(search);
+    let response: VerificationResponse = await sendVerificationSMS(search);
     setWaitingResponse(false);
-    if (errorMsg !== "") {
-      setInputError(errorMsg);
+    if (response.code_length === undefined) {
+      setInputError(response.message);
     } else {
+      setVerificationCodeLength(response.code_length);
       setStep(step + 1);
     }
   }
@@ -195,7 +203,7 @@ const SearchContent = ({
       title: "Email",
       value: "email",
       description:
-        "Ingrese el correo electrónico que desea consultar. Se le enviará un código de 6-dígitos a su correo electrónico.",
+        "Ingrese el correo electrónico que desea consultar. Se le enviará un código de verificación a su correo electrónico.",
       submitFunc: handleEmailSubmit,
       search: search,
       setSearch: setSearch,
@@ -206,7 +214,7 @@ const SearchContent = ({
       title: "Número celular",
       value: "phone",
       description:
-        "Ingrese el número celular que desea consultar. Se le enviará un código de 6-dígitos a su al celular ingresado mediante SMS." +
+        "Ingrese el número celular que desea consultar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
         "\nRecuerde que un número celular tiene el siguiente formato +56 9 XXXX XXXX, 56 9 XXXX XXXX o 9 XXXX XXXX.",
       submitFunc: handlePhoneSubmit,
       search: search,
@@ -316,12 +324,14 @@ const CodeVerification = ({
   search,
   setSearch,
   searchType,
+  verificationCodeLength,
 }: {
   step: number;
   setStep: Dispatch<SetStateAction<number>>;
   search: string;
   setSearch: Dispatch<SetStateAction<string>>;
   searchType: QueryType;
+  verificationCodeLength: number;
 }) => {
   const COOLDOWN_WAIT: number = 30;
   const [verificationCode, setVerificationCode] = useState<string>("");
@@ -345,11 +355,11 @@ const CodeVerification = ({
     setVerificationCode(""); // Empty code input
     setStartCooldown(true); // Start cooldown to wait before resending again
     setWaitingResponse(true);
-    let errorMsg: string = await sendVerificationEmail(search);
+    let response: VerificationResponse = await sendVerificationEmail(search);
     setWaitingResponse(false);
-    if (errorMsg !== "") {
+    if (response.code_length === undefined) {
       toast({
-        title: errorMsg,
+        title: response.message,
         variant: "destructive",
       });
     } else {
@@ -361,7 +371,7 @@ const CodeVerification = ({
   }
 
   async function handleCodeSubmit() {
-    if (verificationCode.length == 6) {
+    if (verificationCode.length == verificationCodeLength) {
       setWaitingResponse(true);
       let [isValid, errorMsg] = await verifyCode(
         verificationCode,
@@ -401,41 +411,41 @@ const CodeVerification = ({
   }, [startCooldown]);
 
   useEffect(() => {
-    if (inputError && verificationCode.length < 6) {
+    if (inputError && verificationCode.length < verificationCodeLength) {
       setInputError("");
     }
-  }, [inputError, verificationCode]);
+  }, [inputError, verificationCode, verificationCodeLength]);
 
   return (
     <Card className="max-w-lg">
       <CardHeader>
         <CardTitle>Ingresa el código de verificación enviado</CardTitle>
-        <CardDescription>Código de 6-dígitos</CardDescription>
+        <CardDescription>{`Código de ${verificationCodeLength}-dígitos`}</CardDescription>
       </CardHeader>
       <CardContent>
         <p>
           Revise el buzón de entrada (o spam) de su correo electrónico, donde se
-          le ha enviado un código de verificación de 6 dígitos.
+          le ha enviado un código de verificación de {verificationCodeLength}{" "}
+          dígitos.
         </p>
         <div className="flex flex-col mt-5 gap-y-5 items-center justify-center w-full">
           <InputOTP
             value={verificationCode}
             onChange={(value) => setVerificationCode(value)}
-            maxLength={6}
+            maxLength={verificationCodeLength}
             disabled={loadingNextPage ? true : false}
           >
-            <InputOTPGroup>
-              {Array.from(Array(3).keys()).map((i) => [
+            {Array.from(Array(verificationCodeLength).keys()).map((i) => [
+              <InputOTPGroup key={i}>
                 <InputOTPSlot
-                  key={i}
                   index={i}
                   className={
                     inputError.length === 0 ? "" : "border-red-hackerlab"
                   }
-                />,
-              ])}
-            </InputOTPGroup>
-            <InputOTPGroup>
+                />
+              </InputOTPGroup>,
+            ])}
+            {/* <InputOTPGroup>
               {Array.from(Array(3).keys()).map((i) => [
                 <InputOTPSlot
                   key={i}
@@ -445,7 +455,7 @@ const CodeVerification = ({
                   }
                 />,
               ])}
-            </InputOTPGroup>
+            </InputOTPGroup> */}
           </InputOTP>
           {inputError !== "" && (
             <p className="text-red-hackerlab text-center">{inputError}</p>
@@ -485,7 +495,9 @@ const CodeVerification = ({
           <Button
             type="button"
             className="w-full"
-            disabled={verificationCode.length !== 6 ? true : false}
+            disabled={
+              verificationCode.length !== verificationCodeLength ? true : false
+            }
             onClick={(e) => {
               e.preventDefault();
               handleCodeSubmit();

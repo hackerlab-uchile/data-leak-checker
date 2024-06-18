@@ -1,5 +1,6 @@
 import { DataLeak } from "@/models/Breach";
 import { ErrorMsg } from "@/models/ErrorMsg";
+import { VerificationResponse } from "@/models/VerificationResponse";
 import apiClient from "@/utils/axios";
 
 export enum QueryType {
@@ -50,36 +51,59 @@ export async function getDataLeaksByValueAndTypeReal(
   }
 }
 
-export async function sendVerificationEmail(query: string): Promise<string> {
+export async function sendVerificationEmail(
+  query: string
+): Promise<VerificationResponse> {
   let response;
   const data = { email: query };
   try {
-    response = await apiClient.post(`/verify/send/email/`, data);
-    return "";
+    response = await apiClient.post<VerificationResponse>(
+      `/verify/send/email/`,
+      data
+    );
+    return response.data;
   } catch (error: any) {
     if (error.response && error.response.status === 422) {
-      return "El formato del correo ingresado no es válido. Por favor, inténtelo de nuevo";
+      return {
+        message:
+          "El formato del correo ingresado no es válido. Por favor, inténtelo de nuevo",
+      };
     } else if (error.response && error.response.status === 429) {
-      return "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde";
+      return {
+        message:
+          "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde",
+      };
     } else {
-      return "Ha ocurrido un error. Por favor, inténtelo más tarde";
+      return {
+        message: "Ha ocurrido un error. Por favor, inténtelo más tarde",
+      };
     }
   }
 }
 
-export async function sendVerificationSMS(query: string): Promise<string> {
+export async function sendVerificationSMS(
+  query: string
+): Promise<VerificationResponse> {
   let response;
   const data = { phone: query };
   try {
     response = await apiClient.post(`/verify/send/sms/`, data);
-    return "";
+    return response.data;
   } catch (error: any) {
     if (error.response && error.response.status === 422) {
-      return "El formato del número móvil ingresado no es válido. Por favor, inténtelo de nuevo";
+      return {
+        message:
+          "El formato del número móvil ingresado no es válido. Por favor, inténtelo de nuevo",
+      };
     } else if (error.response && error.response.status === 429) {
-      return "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde";
+      return {
+        message:
+          "Se han realizado demasiadas solicitudes. Inténtelo de nuevo más tarde",
+      };
     } else {
-      return "Ha ocurrido un error. Por favor, inténtelo más tarde";
+      return {
+        message: "Ha ocurrido un error. Por favor, inténtelo más tarde",
+      };
     }
   }
 }
