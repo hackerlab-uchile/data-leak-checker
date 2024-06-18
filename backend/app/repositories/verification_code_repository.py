@@ -78,7 +78,7 @@ def get_valid_verification_code_if_correct(
     if (
         candidate
         and not candidate.used
-        and candidate.tries < 3
+        and candidate.tries <= 3
         and candidate.code == input_code
     ):
         return candidate
