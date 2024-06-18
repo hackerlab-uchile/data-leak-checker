@@ -1,11 +1,9 @@
+from core.config import CODE_LENGTH
 from core.database import Base
 from models.user import User
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-CODE_LENGTH = 6
-CODE_EXPIRE_MINUTES = 5
 
 
 class VerificationCode(Base):
@@ -13,9 +11,11 @@ class VerificationCode(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False)
     code: Mapped[str] = mapped_column(String(length=CODE_LENGTH), nullable=False)
-    created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime, default=func.now(), nullable=False
+    )
     address: Mapped[str] = mapped_column(String, nullable=False)
-    used: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    used: Mapped[bool] = mapped_column(Boolean, default=false(), nullable=False)
     tries: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     user_owner: Mapped["User"] = relationship("User", foreign_keys=[user_id])

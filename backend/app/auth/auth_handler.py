@@ -2,12 +2,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
-from core.config import JWT_ALGORITHM, JWT_SECRET
+from core.config import JWT_ALGORITHM, JWT_EXPIRE_MINUTES, JWT_SECRET
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyCookie
 from schemas.token import TokenPayload
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 cookie_scheme = APIKeyCookie(
     name="token", description="Allows sensitive breaches search", auto_error=False
@@ -17,7 +15,7 @@ cookie_scheme = APIKeyCookie(
 def create_jwt_token(
     value: str,
     dtype: str,
-    expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    expires_delta: timedelta = timedelta(minutes=JWT_EXPIRE_MINUTES),
 ) -> str:
     payload = {
         "value": value,

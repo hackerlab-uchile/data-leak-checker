@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta, timezone
 
 import requests
-from auth.auth_handler import ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token
+from auth.auth_handler import create_jwt_token
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from core.config import (
+    BACKEND_URL,
     CLIENT_ID,
     CLIENT_SECRET,
     DEV_RECEIVER_NUMBER,
     IN_PROD,
+    JWT_EXPIRE_MINUTES,
     SMTP_PASSWORD,
     SMTP_SERVER,
     SMTP_USERNAME,
@@ -45,7 +47,7 @@ oauth.register(
     client_secret=CLIENT_SECRET,
     client_kwargs={
         "scope": "openid email profile",
-        "redirect_url": "http://localhost:8000/verify/oauth/",
+        "redirect_url": BACKEND_URL + "/verify/oauth/",
     },
 )
 
@@ -178,8 +180,7 @@ async def oauth_verification(request: Request):
     response.set_cookie(
         key="token",
         value=token,
-        expires=datetime.now(timezone.utc)
-        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        expires=datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),
         secure=True
         if IN_PROD.lower() == "true"
         else False,  # Use false for development purposes
@@ -209,8 +210,7 @@ async def verify_code(
     response.set_cookie(
         key="token",
         value=token,
-        expires=datetime.now(timezone.utc)
-        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        expires=datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),
         secure=True
         if IN_PROD.lower() == "true"
         else False,  # Use false for development purposes

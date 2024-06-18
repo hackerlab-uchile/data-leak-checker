@@ -1,8 +1,9 @@
 import secrets
 from datetime import timedelta
 
+from core.config import CODE_EXPIRE_MINUTES, CODE_LENGTH, MAX_CODE_TRIES
 from models.user import User
-from models.verification_code import CODE_EXPIRE_MINUTES, CODE_LENGTH, VerificationCode
+from models.verification_code import VerificationCode
 from pydantic import PositiveInt
 from repositories.data_type_repository import get_data_type_by_name
 from schemas.verification_code import (
@@ -70,7 +71,7 @@ def get_valid_verification_code_if_correct(
         .order_by(desc(VerificationCode.created_at))
         .first()
     )
-    if candidate and candidate.tries < 3:
+    if candidate and candidate.tries < MAX_CODE_TRIES:
         candidate.tries += 1
         print(f"{candidate.tries=}")
         db.commit()
@@ -78,7 +79,7 @@ def get_valid_verification_code_if_correct(
     if (
         candidate
         and not candidate.used
-        and candidate.tries <= 3
+        and candidate.tries <= MAX_CODE_TRIES
         and candidate.code == input_code
     ):
         return candidate

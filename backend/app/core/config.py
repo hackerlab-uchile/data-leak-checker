@@ -1,23 +1,69 @@
 import os
+import warnings
 
-POSTGRES_USER: str | None = os.environ.get("POSTGRES_USER")
-POSTGRES_PASSWORD: str | None = os.environ.get("POSTGRES_PASSWORD")
-POSTGRES_SERVER: str | None = os.environ.get("POSTGRES_SERVER")
-POSTGRES_DB: str | None = os.environ.get("POSTGRES_DB")
-POSTGRES_TEST_DB: str | None = os.environ.get("POSTGRES_TEST_DB")
-HMAC_KEY: str | None = os.environ.get("HMAC_KEY")
-SMTP_USERNAME: str | None = os.environ.get("SMTP_USERNAME")
-SMTP_PASSWORD: str | None = os.environ.get("SMTP_PASSWORD")
-SMTP_SERVER: str | None = os.environ.get("SMTP_SERVER")
-JWT_SECRET: str | None = os.environ.get("JWT_SECRET")
-JWT_ALGORITHM: str = os.environ.get("JWT_ALGORITHM", default="")
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-TWILIO_ACCOUNT_SID: str = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_SENDER_NUMBER: str = os.environ.get("TWILIO_SENDER_NUMBER", "")
-TWILIO_SENDER_NUMBER: str = os.environ.get("TWILIO_SENDER_NUMBER", "")
-DEV_RECEIVER_NUMBER: str = os.environ.get("DEV_RECEIVER_NUMBER", "")
-IN_PROD: str = os.environ.get("IN_PROD", "false")
-CLIENT_ID: str = os.environ.get("CLIENT_ID", "")
-CLIENT_SECRET: str = os.environ.get("CLIENT_SECRET", "")
 
-# TODO: Lanzar errores cuando no se encuentren ciertos parámetors OBLIGATORIOS
+class EnvironmentVariableWarning(UserWarning):
+    pass
+
+
+def get_env_value(key, default="") -> str:
+    try:
+        value = os.environ[key].strip()
+    except KeyError:
+        warnings.warn(
+            f"Env variable {key} doesn't exist. Using default value: '{default}'",
+            EnvironmentVariableWarning,
+        )
+        return default
+    return value
+
+
+def get_int_from_env(key, default=0) -> int:
+    try:
+        value = int(get_env_value(key))
+    except ValueError:
+        warnings.warn(
+            f"Tried accessing int variable {key}, but had an invalid int value. Using default value: '{default}'",
+            EnvironmentVariableWarning,
+        )
+        return default
+    return value
+
+
+# General purpopse
+IN_PROD: str = get_env_value("IN_PROD", "false")
+HMAC_KEY: str = get_env_value("HMAC_KEY")
+BACKEND_URL: str = get_env_value("BACKEND_URL", "http://localhost:3000")
+
+# Database connection
+POSTGRES_USER: str = get_env_value("POSTGRES_USER")
+POSTGRES_PASSWORD: str = get_env_value("POSTGRES_PASSWORD")
+POSTGRES_SERVER: str = get_env_value("POSTGRES_SERVER")
+POSTGRES_DB: str = get_env_value("POSTGRES_DB")
+POSTGRES_TEST_DB: str = get_env_value("POSTGRES_TEST_DB")
+
+# SMTP / Email sender
+SMTP_USERNAME: str = get_env_value("SMTP_USERNAME")
+SMTP_PASSWORD: str = get_env_value("SMTP_PASSWORD")
+SMTP_SERVER: str = get_env_value("SMTP_SERVER")
+
+# JWT Config
+JWT_SECRET: str = get_env_value("JWT_SECRET")
+JWT_ALGORITHM: str = get_env_value("JWT_ALGORITHM")
+JWT_EXPIRE_MINUTES: int = get_int_from_env("JWT_EXPIRE_MINUTES", 10)
+
+# Twilio / SMS sender
+TWILIO_AUTH_TOKEN: str = get_env_value("TWILIO_AUTH_TOKEN")
+TWILIO_ACCOUNT_SID: str = get_env_value("TWILIO_ACCOUNT_SID")
+TWILIO_SENDER_NUMBER: str = get_env_value("TWILIO_SENDER_NUMBER")
+TWILIO_SENDER_NUMBER: str = get_env_value("TWILIO_SENDER_NUMBER")
+DEV_RECEIVER_NUMBER: str = get_env_value("DEV_RECEIVER_NUMBER")
+
+# OAuth Config
+CLIENT_ID: str = get_env_value("CLIENT_ID")
+CLIENT_SECRET: str = get_env_value("CLIENT_SECRET")
+
+# Verification Code
+CODE_LENGTH: int = get_int_from_env("CODE_LENGTH", 8)
+CODE_EXPIRE_MINUTES: int = get_int_from_env("CODE_EXPIRE_MINUTES", 5)
+MAX_CODE_TRIES: int = get_int_from_env("MAX_CODE_TRIES", 3)
