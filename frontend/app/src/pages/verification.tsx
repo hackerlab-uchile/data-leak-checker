@@ -167,12 +167,21 @@ const SearchContent = ({
 
   async function handleEmailSubmit() {
     // TODO: Validate Email Format
-    if (!search || waitingResponse) {
+    // let cleanSearch = search.replace(/\s+/g, "");
+    let cleanSearch = search.trim();
+    let emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+    let validEmail = emailRegex.test(cleanSearch);
+    if (!cleanSearch || waitingResponse) {
+      return;
+    } else if (!validEmail) {
+      setInputError("Formato inválido de correo electrónico");
       return;
     }
     setWaitingResponse(true);
     setType(QueryType.Email);
-    let response: VerificationResponse = await sendVerificationEmail(search);
+    let response: VerificationResponse = await sendVerificationEmail(
+      cleanSearch
+    );
     setWaitingResponse(false);
     if (response.code_length === undefined) {
       setInputError(response.message);
@@ -183,13 +192,21 @@ const SearchContent = ({
   }
 
   async function handlePhoneSubmit() {
-    // TODO: Validate Phone Format
-    if (!search || waitingResponse) {
+    let cleanSearch = search.replace(/\s+/g, "");
+    let phoneRegex = /^(((\+)?56)?9)?[\d]{8}$/;
+    let validPhoneNumber = phoneRegex.test(cleanSearch);
+    console.log("Search: ", search);
+    console.log("cleanSearch: ", cleanSearch);
+    console.log("validPhoneNumber: ", validPhoneNumber);
+    if (!cleanSearch || waitingResponse) {
+      return;
+    } else if (!validPhoneNumber) {
+      setInputError("Formato de número celular inválido");
       return;
     }
     setWaitingResponse(true);
     setType(QueryType.Phone);
-    let response: VerificationResponse = await sendVerificationSMS(search);
+    let response: VerificationResponse = await sendVerificationSMS(cleanSearch);
     setWaitingResponse(false);
     if (response.code_length === undefined) {
       setInputError(response.message);
