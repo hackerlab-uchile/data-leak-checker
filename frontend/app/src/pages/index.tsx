@@ -14,7 +14,11 @@ import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
 import { FormEvent, useEffect, useState } from "react";
 import { DataLeak } from "@/models/Breach";
-import { getDataLeaksByValueAndType, QueryType } from "@/api/api";
+import {
+  getDataLeaksByValueAndType,
+  getDataLeaksByValueAndTypeDemo,
+  QueryType,
+} from "@/api/api";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdOutlineSecurity } from "react-icons/md";
 import { FaIdCard } from "react-icons/fa";
@@ -59,7 +63,8 @@ export default function Home() {
       setResponseReceived(false);
       setWaitingResponse(true);
       const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
+        // await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
+        await getDataLeaksByValueAndTypeDemo(emailQuery, QueryType.Email);
       setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
@@ -79,7 +84,8 @@ export default function Home() {
       setWaitingResponse(true);
       console.log("Query:", rutQuery);
       const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        await getDataLeaksByValueAndType(rutQuery, QueryType.Rut);
+        //   await getDataLeaksByValueAndType(rutQuery, QueryType.Rut);
+        await getDataLeaksByValueAndTypeDemo(rutQuery, QueryType.Rut);
       setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);
@@ -96,7 +102,8 @@ export default function Home() {
       setResponseReceived(false);
       setWaitingResponse(true);
       const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        await getDataLeaksByValueAndType(phoneQuery, QueryType.Phone);
+        // await getDataLeaksByValueAndType(phoneQuery, QueryType.Phone);
+        await getDataLeaksByValueAndTypeDemo(phoneQuery, QueryType.Phone);
       setError(gotError);
       setDataLeaks(dataLeaksList);
       setResponseReceived(true);

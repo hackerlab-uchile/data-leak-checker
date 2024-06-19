@@ -5,6 +5,7 @@ import jwt
 from core.config import JWT_ALGORITHM, JWT_EXPIRE_MINUTES, JWT_SECRET
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyCookie
+from schemas.data_leak import DataLeakInput
 from schemas.token import TokenPayload
 
 cookie_scheme = APIKeyCookie(
@@ -43,6 +44,23 @@ def get_jwt_token(token: Optional[str] = Security(cookie_scheme)) -> TokenPayloa
         if value is None or dtype is None:
             raise credentials_exception
     except jwt.InvalidTokenError:
-        print("Error token decode")
         raise credentials_exception
     return TokenPayload(value=value, dtype=dtype)
+
+
+def validate_sensitive_search(
+    payload: DataLeakInput, token: Optional[str] = Security(cookie_scheme)
+) -> bool:
+    try:
+        print("Token: ", token)
+        response = False
+        token_decode = get_jwt_token(token=token)
+        print("Valid token? ", True)
+        if payload.dtype == token_decode.dtype and (
+            payload.value == "nico@example.com" or payload.value == token_decode.value
+        ):
+            response = True
+    except HTTPException as e:
+        print("ERROOOOOOOOR!!!:", e)
+        return False
+    return response

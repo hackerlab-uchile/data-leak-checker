@@ -20,7 +20,7 @@ def get_env_value(key, default="") -> str:
 
 def get_int_from_env(key, default=0) -> int:
     try:
-        value = int(get_env_value(key))
+        value = int(os.environ.get(key, default=default))
     except ValueError:
         warnings.warn(
             f"Tried accessing int variable {key}, but had an invalid int value. Using default value: '{default}'",
@@ -33,7 +33,7 @@ def get_int_from_env(key, default=0) -> int:
 # General purpopse
 IN_PROD: str = get_env_value("IN_PROD", "false")
 HMAC_KEY: str = get_env_value("HMAC_KEY")
-BACKEND_URL: str = get_env_value("BACKEND_URL", "http://localhost:3000")
+BACKEND_URL: str = get_env_value("BACKEND_URL", "http://localhost:8000")
 
 # Database connection
 POSTGRES_USER: str = get_env_value("POSTGRES_USER")
@@ -67,3 +67,16 @@ CLIENT_SECRET: str = get_env_value("CLIENT_SECRET")
 CODE_LENGTH: int = get_int_from_env("CODE_LENGTH", 8)
 CODE_EXPIRE_MINUTES: int = get_int_from_env("CODE_EXPIRE_MINUTES", 5)
 MAX_CODE_TRIES: int = get_int_from_env("MAX_CODE_TRIES", 3)
+MAX_CODES_CREATED: int = get_int_from_env("MAX_CODES_CREATED", 5)
+CODE_MINUTES_RANGE_LIMIT: int = get_int_from_env("CODE_MINUTES_RANGE_LIMIT", 30)
+
+# Enabled Search Keys
+ENABLED_SEARCH_KEYS: list[str] = get_env_value(
+    "ENABLED_SEARCH_KEYS", "email,phone,rut"
+).split(",")
+ENABLED_SENSITIVE_SEARCH_KEYS: list[str] = get_env_value(
+    "ENABLED_SENSITIVE_SEARCH_KEYS", "email,phone,rut"
+).split(",")
+
+# Frontend
+FRONTEND_URL: str = get_env_value("NEXT_PUBLIC_FRONTEND_URL", "http://localhost:3000")

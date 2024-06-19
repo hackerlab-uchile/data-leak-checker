@@ -8,7 +8,6 @@ from schemas.data_types import DataType as DataTypeSchema
 
 class DataLeakInput(BaseModel):
     value: str
-    # TODO: Traer de la bdd los nombres de las llaves
     dtype: Literal["email", "phone", "rut"]
 
 

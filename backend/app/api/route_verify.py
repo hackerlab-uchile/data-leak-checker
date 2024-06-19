@@ -7,7 +7,9 @@ from core.config import (
     BACKEND_URL,
     CLIENT_ID,
     CLIENT_SECRET,
+    CODE_LENGTH,
     DEV_RECEIVER_NUMBER,
+    FRONTEND_URL,
     IN_PROD,
     JWT_EXPIRE_MINUTES,
     SMTP_PASSWORD,
@@ -119,7 +121,10 @@ async def send_email_verify(
     if conf:
         fm = FastMail(conf)
         background_task.add_task(fm.send_message, message)
-        return JSONResponse(status_code=200, content={"message": "email has been sent"})
+        return JSONResponse(
+            status_code=200,
+            content={"message": "email has been sent", "code_length": CODE_LENGTH},
+        )
     return JSONResponse(status_code=503, content={"message": "Service unavailable"})
 
 
@@ -148,7 +153,10 @@ async def send_sms_verify(
     auth = (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
     response = requests.post(url, data=data, auth=auth)
     if response.status_code == 201:
-        return JSONResponse(status_code=200, content={"message": "Sms has been sent"})
+        return JSONResponse(
+            status_code=200,
+            content={"message": "Sms has been sent", "code_length": CODE_LENGTH},
+        )
     return JSONResponse(status_code=400, content={"message": "Sms was not sent"})
 
 
@@ -176,7 +184,7 @@ async def oauth_verification(request: Request):
     # 3) Entregar JWT al usuario
     associated_value = "11111111-1"
     token = create_jwt_token(associated_value, "rut")
-    response = RedirectResponse("http://localhost:3000/sensitive", status_code=302)
+    response = RedirectResponse(FRONTEND_URL + "/sensitive", status_code=302)
     response.set_cookie(
         key="token",
         value=token,

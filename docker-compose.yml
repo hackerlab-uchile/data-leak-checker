@@ -48,6 +48,11 @@ services:
       - JWT_ALGORITHM
       - CLIENT_ID
       - CLIENT_SECRET
+      - CODE_LENGTH
+      - CODE_EXPIRE_MINUTES
+      - MAX_CODE_TRIES
+      - MAX_CODES_CREATED
+      - CODE_MINUTES_RANGE_LIMIT
     depends_on:
       db:
         condition: service_healthy
