@@ -355,7 +355,17 @@ const CodeVerification = ({
     setVerificationCode(""); // Empty code input
     setStartCooldown(true); // Start cooldown to wait before resending again
     setWaitingResponse(true);
-    let response: VerificationResponse = await sendVerificationEmail(search);
+    let response: VerificationResponse;
+    if (searchType == QueryType.Email) {
+      response = await sendVerificationEmail(search);
+    } else if (searchType == QueryType.Phone) {
+      response = await sendVerificationEmail(search);
+    } else {
+      response = {
+        message:
+          "Ha ocurrido un error inesperado. Por favor, inténtelo más tarde",
+      };
+    }
     setWaitingResponse(false);
     if (response.code_length === undefined) {
       toast({
