@@ -1,14 +1,15 @@
-from typing import List, Literal
+from typing import List
 
 from pydantic import BaseModel, Field, PositiveInt
 from schemas.breaches import Breach as BreachSchema
 from schemas.breaches import BreachShow
+from schemas.custom_fields import AvailableSearchKeys
 from schemas.data_types import DataType as DataTypeSchema
 
 
 class DataLeakInput(BaseModel):
     value: str
-    dtype: Literal["email", "phone", "rut"]
+    dtype: AvailableSearchKeys
 
 
 class DataLeakBase(BaseModel):

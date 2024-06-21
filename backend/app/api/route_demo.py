@@ -3,7 +3,6 @@ from typing import List
 
 from auth.auth_handler import get_jwt_token, validate_sensitive_search
 from core.database import get_db
-from dependencies.data_type_dependency import enabled_search_keys_checker
 from fastapi import APIRouter, Depends
 from models.breach import Breach
 from models.breach_data import BreachData
@@ -19,11 +18,7 @@ from sqlalchemy.sql.expression import func
 router = APIRouter()
 
 
-@router.post(
-    "/data/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.post("/data/", response_model=List[DataLeakShow])
 def get_breaches_demo(
     payload: DataLeakInput,
     is_full_search: bool = Depends(validate_sensitive_search),
@@ -62,11 +57,7 @@ def get_breaches_demo(
     return found_breaches
 
 
-@router.post(
-    "/data/public/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.post("/data/public/", response_model=List[DataLeakShow])
 def get_breaches_public_demo(payload: DataLeakInput, db: Session = Depends(get_db)):
     """Returns information about random data breaches related to a data type.
     Only for demo purposes
@@ -97,11 +88,7 @@ def get_breaches_public_demo(payload: DataLeakInput, db: Session = Depends(get_d
     return found_breaches
 
 
-@router.get(
-    "/data/sensitive/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.get("/data/sensitive/", response_model=List[DataLeakShow])
 def get_sensitive_breaches_demo(
     payload: TokenPayload = Depends(get_jwt_token), db: Session = Depends(get_db)
 ):

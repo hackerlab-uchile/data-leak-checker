@@ -2,7 +2,6 @@ from typing import List
 
 from auth.auth_handler import get_jwt_token, validate_sensitive_search
 from core.database import get_db
-from dependencies.data_type_dependency import enabled_search_keys_checker
 from fastapi import APIRouter, Depends, HTTPException, status
 from models.breach import Breach
 from models.data_leak import DataLeak
@@ -16,11 +15,7 @@ from utils.crytpography import get_hash
 router = APIRouter()
 
 
-@router.post(
-    "/data/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.post("/data/", response_model=List[DataLeakShow])
 def get_breaches_info(
     payload: DataLeakInput,
     is_full_search: bool = Depends(validate_sensitive_search),
@@ -51,11 +46,7 @@ def get_breaches_info(
     return found_breaches
 
 
-@router.post(
-    "/data/public/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.post("/data/public/", response_model=List[DataLeakShow])
 def get_breaches_public_info(payload: DataLeakInput, db: Session = Depends(get_db)):
     """Returns information about non sensitive data breaches related to a value and type"""
     hash_value = get_hash(payload.value)
@@ -76,11 +67,7 @@ def get_breaches_public_info(payload: DataLeakInput, db: Session = Depends(get_d
     return found_breaches
 
 
-@router.get(
-    "/data/sensitive/",
-    dependencies=[Depends(enabled_search_keys_checker)],
-    response_model=List[DataLeakShow],
-)
+@router.get("/data/sensitive/", response_model=List[DataLeakShow])
 def get_sensitive_breaches(
     payload: TokenPayload = Depends(get_jwt_token), db: Session = Depends(get_db)
 ):
