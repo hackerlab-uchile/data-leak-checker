@@ -92,12 +92,20 @@ export default function VerificationHome() {
     <main className="flex min-h-screen flex-col items-center justify-start md:px-24 pt-2 pb-20">
       <Navbar />
       <div className="flex flex-col mt-20 w-full items-center justify-start">
-        <div className="flex flex-row mb-3 self-start w-full items-center gap-x-5">
-          <h2 className="text-xl font-bold">Filtraciones Sensibles</h2>
+        <div className="flex flex-row mb-3 pl-3 self-start w-full items-center justify-center sm:justify-start gap-x-5">
+          <h2 className="text-xl font-bold">Autenticación</h2>
           <CircleNumber
             aNumber={step + 1}
             className="bg-primary text-primary-foreground"
           ></CircleNumber>
+          <Button
+            type="submit"
+            variant={"outline"}
+            className="my-5"
+            onClick={(e) => setStep(step - 1)}
+          >
+            Volver
+          </Button>
         </div>
         {content}
         <div className="w-[95%]">
@@ -121,21 +129,30 @@ const PresentationContent = ({
   setStep: Dispatch<SetStateAction<number>>;
 }) => {
   return (
-    <Card className="max-w-md">
+    <Card className="max-w-lg">
       <CardHeader>
-        <CardTitle>Filtraciones Sensibles</CardTitle>
-        <CardDescription>¿Qué es una filtración sensible?</CardDescription>
+        <CardTitle>Antes de empezar</CardTitle>
       </CardHeader>
       <CardContent>
+        <p className="text-lg text-muted-foreground">¿Por qué autenticarse?</p>
+        <p className="text-justify mb-3">
+          Existen ciertas filtraciones que sólo serán visibles a aquellos que
+          demuestren ser dueños de la cuenta a consultar. Estás son denominadas
+          como <b>filtraciones sensibles</b>.
+        </p>
+        <p className="text-lg text-muted-foreground">
+          ¿Qué es una filtración sensible?
+        </p>
         <p className="text-justify">
-          Una filtración sensible es aquella que con tal solo se sepa qué datos
-          estuvieron registrados (correo, RUT, teléfono, etc) en cierto
-          servicio, pone en riesgo la reputación de los usuarios involucrados, o
+          Una <b>filtración sensible</b> es aquella que con tal solo se sepa qué
+          datos (correo, RUT, teléfono, etc) estuvieron registrados en cierto
+          servicio,{" "}
+          <b>pone en riesgo la reputación de los usuarios involucrados</b>, o
           que lleve a otras consecuencias que los pudiese impactar
           negativamente.
         </p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex justify-center">
         <Button
           type="button"
           onClick={(e) => {
@@ -166,17 +183,16 @@ const SearchContent = ({
 }) => {
   const [inputError, setInputError] = useState("");
   const [waitingResponse, setWaitingResponse] = useState(false);
-  // const configEnabledVerificationKeys = process.env
-  //   .NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS
-  //   ? process.env.NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS.split(",")
-  //   : ["email", "phone", "rut"];
-  const configEnabledVerificationKeys = ["phone", "rut"];
+  const configEnabledVerificationKeys = process.env
+    .NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS
+    ? process.env.NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS.split(",")
+    : ["email", "phone", "rut"];
   const availableVerificationKeys = [
     {
       title: "Email",
       value: "email",
       description:
-        "Ingrese el correo electrónico que desea consultar. Se le enviará un código de verificación a su correo electrónico.",
+        "Ingrese el correo electrónico que desea autenticar. Se le enviará un código de verificación a su correo electrónico.",
       submitFunc: handleEmailSubmit,
       search: search,
       setSearch: setSearch,
@@ -187,7 +203,7 @@ const SearchContent = ({
       title: "Número celular",
       value: "phone",
       description:
-        "Ingrese el número celular que desea consultar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
+        "Ingrese el número celular que desea autenticar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
         "\nRecuerde que un número celular tiene el siguiente formato: +56 9 XXXX XXXX.",
       submitFunc: handlePhoneSubmit,
       search: search,

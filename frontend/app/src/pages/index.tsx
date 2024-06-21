@@ -41,10 +41,12 @@ import { Loader2 } from "lucide-react";
 import BreachCard from "@/components/BreachCard";
 import AlertMessage from "@/components/AlertMessage";
 import { safetyTips } from "@/utils/webSafetyTips";
+import { useAuth } from "@/contexts/AuthContext";
 
 const redColor = "#ED342F";
 
 export default function Home() {
+  const { user } = useAuth();
   const router = useRouter();
   const configEnabledSearchKeys = process.env.NEXT_PUBLIC_ENABLED_SEARCH_KEYS
     ? process.env.NEXT_PUBLIC_ENABLED_SEARCH_KEYS.split(",")
@@ -269,17 +271,18 @@ export default function Home() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex flex-row items-center justify-center">
-                    {/* <Link
-                      href={{
-                        pathname: "/search",
-                        query: { search: `${searchEmail}` },
-                      }}
-                    > */}
                     <Button type="submit">Buscar</Button>
-                    {/* </Link> */}
                   </CardFooter>
                 </form>
               </Card>
+              {user === null && (
+                <div className="flex flex-col w-full items-center">
+                  <p className="text-indigo-600">
+                    <b>Nota:</b> Para ver TODAS las filtraciones de una cuenta
+                    debes autenticarte
+                  </p>
+                </div>
+              )}
               {responseReceived ? (
                 <>
                   {!error ? (
