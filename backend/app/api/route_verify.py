@@ -22,6 +22,9 @@ from core.config import (
     TWILIO_SENDER_NUMBER,
 )
 from core.database import get_db
+from dependencies.data_type_dependency import (
+    EnabledVerificationSearchKeyChecker,
+)
 from dependencies.verification_code_dependency import (
     verify_host_rate_limting,
 )
@@ -39,10 +42,6 @@ from repositories.verification_code_repository import (
 from schemas.custom_fields import ChileanMobileNumber
 from schemas.verification_code import VerificationCodeInput
 from sqlalchemy.orm import Session
-
-from backend.app.dependencies.data_type_dependency import (
-    EnabledVerificationSearchKeyChecker,
-)
 
 router = APIRouter()
 

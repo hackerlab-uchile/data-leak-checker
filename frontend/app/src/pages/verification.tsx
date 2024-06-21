@@ -166,10 +166,38 @@ const SearchContent = ({
 }) => {
   const [inputError, setInputError] = useState("");
   const [waitingResponse, setWaitingResponse] = useState(false);
+  // const configEnabledVerificationKeys = process.env
+  //   .NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS
+  //   ? process.env.NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS.split(",")
+  //   : ["email", "phone", "rut"];
+  const configEnabledVerificationKeys = ["phone", "rut"];
+  const availableVerificationKeys = [
+    {
+      title: "Email",
+      value: "email",
+      description:
+        "Ingrese el correo electrónico que desea consultar. Se le enviará un código de verificación a su correo electrónico.",
+      submitFunc: handleEmailSubmit,
+      search: search,
+      setSearch: setSearch,
+      inputHint: "Ingrese un email...",
+      name: "correo",
+    },
+    {
+      title: "Número celular",
+      value: "phone",
+      description:
+        "Ingrese el número celular que desea consultar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
+        "\nRecuerde que un número celular tiene el siguiente formato: +56 9 XXXX XXXX.",
+      submitFunc: handlePhoneSubmit,
+      search: search,
+      setSearch: setSearch,
+      inputHint: "Ingrese un número celular...",
+      name: "número telefónico",
+    },
+  ];
 
   async function handleEmailSubmit() {
-    // TODO: Validate Email Format
-    // let cleanSearch = search.replace(/\s+/g, "");
     let cleanSearch = search.trim();
     let emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
     let validEmail = emailRegex.test(cleanSearch);
@@ -216,131 +244,139 @@ const SearchContent = ({
       setStep(step + 1);
     }
   }
-  const searchKeys = [
-    {
-      title: "Email",
-      value: "email",
-      description:
-        "Ingrese el correo electrónico que desea consultar. Se le enviará un código de verificación a su correo electrónico.",
-      submitFunc: handleEmailSubmit,
-      search: search,
-      setSearch: setSearch,
-      inputHint: "Ingrese un email...",
-      name: "correo",
-    },
-    {
-      title: "Número celular",
-      value: "phone",
-      description:
-        "Ingrese el número celular que desea consultar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
-        "\nRecuerde que un número celular tiene el siguiente formato: +56 9 XXXX XXXX.",
-      submitFunc: handlePhoneSubmit,
-      search: search,
-      setSearch: setSearch,
-      inputHint: "Ingrese un número celular...",
-      name: "número telefónico",
-    },
-  ];
+  function getEnabledVerificationKeys() {
+    let enabledKeys = [];
+    for (let i = 0; i < availableVerificationKeys.length; i++) {
+      if (
+        configEnabledVerificationKeys.includes(
+          availableVerificationKeys[i].value
+        )
+      )
+        enabledKeys.push(availableVerificationKeys[i]);
+    }
+    return enabledKeys;
+  }
+  const searchKeys = getEnabledVerificationKeys();
+
   return (
     // <Tabs defaultValue="email" className="w-[90%] md:w-[80%] max-w-[1280px]">
-    <Tabs defaultValue="email" className="w-[90%] md:w-[80%] max-w-lg">
-      <TabsList className="grid w-full grid-cols-3">
-        {searchKeys.map((item) => (
-          <TabsTrigger
-            onClick={(e) => {
-              setSearch("");
-              setInputError("");
-            }}
-            key={item.value}
-            value={item.value}
-          >
-            {item.title}
-          </TabsTrigger>
-        ))}
-        <TabsTrigger
-          onClick={(e) => {
-            setSearch("");
-            setInputError("");
-          }}
-          value="rut"
+    <>
+      {configEnabledVerificationKeys ? (
+        <Tabs
+          defaultValue={configEnabledVerificationKeys[0]}
+          className="w-[90%] md:w-[80%] max-w-lg"
         >
-          {"RUT"}
-        </TabsTrigger>
-      </TabsList>
-      {searchKeys.map((item) => (
-        <TabsContent key={item.value} value={item.value}>
-          <Card>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
-            </CardHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                item.submitFunc();
-              }}
-              autoComplete="off"
-              className="w-full"
-            >
-              <CardContent className="space-y-2">
-                <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
-                  {item.value === "phone" ? (
-                    <MobileNumberInput
-                      placeholder={item.inputHint}
-                      searchTerm={item.search}
-                      setSearchTerm={item.setSearch}
-                    />
-                  ) : (
-                    <Search
-                      placeholder={item.inputHint}
-                      searchTerm={item.search}
-                      setSearchTerm={item.setSearch}
-                    />
-                  )}
-                  {inputError !== "" && (
-                    <p className="text-red-hackerlab text-center">
-                      {inputError}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-row items-center justify-center">
-                {waitingResponse == false ? (
-                  <Button type="submit">Buscar</Button>
-                ) : (
-                  <Button variant={"outline"} disabled={true}>
-                    <Loader2 size={"2em"} className="animate-spin"></Loader2>
-                  </Button>
-                )}
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-      ))}
-      <TabsContent key="rut" value="rut">
-        <Card>
-          <CardHeader>
-            <CardTitle>RUT</CardTitle>
-            <CardDescription>
-              Para poder ver las filtraciones sensibles asociadas a un RUT en
-              particular, debe verificar su identidad mediante Clave Única.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
-              <Link
-                className="btn-cu btn-m  btn-color-estandar"
-                href="http://localhost:8000/verify/rut/"
-                title="Este es el botón Iniciar sesión de ClaveÚnica"
+          <TabsList
+            className={`grid w-full grid-cols-${configEnabledVerificationKeys.length}`}
+          >
+            {searchKeys.map((item) => (
+              <TabsTrigger
+                onClick={(e) => {
+                  setSearch("");
+                  setInputError("");
+                }}
+                key={item.value}
+                value={item.value}
               >
-                <span className="cl-claveunica"></span>
-                <span className="texto">Iniciar sesión</span>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+                {item.title}
+              </TabsTrigger>
+            ))}
+            {configEnabledVerificationKeys.includes("rut") && (
+              <TabsTrigger
+                onClick={(e) => {
+                  setSearch("");
+                  setInputError("");
+                }}
+                value="rut"
+              >
+                {"RUT"}
+              </TabsTrigger>
+            )}
+          </TabsList>
+          {searchKeys.map((item) => (
+            <TabsContent key={item.value} value={item.value}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{item.title}</CardTitle>
+                  <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    item.submitFunc();
+                  }}
+                  autoComplete="off"
+                  className="w-full"
+                >
+                  <CardContent className="space-y-2">
+                    <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
+                      {item.value === "phone" ? (
+                        <MobileNumberInput
+                          placeholder={item.inputHint}
+                          searchTerm={item.search}
+                          setSearchTerm={item.setSearch}
+                        />
+                      ) : (
+                        <Search
+                          placeholder={item.inputHint}
+                          searchTerm={item.search}
+                          setSearchTerm={item.setSearch}
+                        />
+                      )}
+                      {inputError !== "" && (
+                        <p className="text-red-hackerlab text-center">
+                          {inputError}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex flex-row items-center justify-center">
+                    {waitingResponse == false ? (
+                      <Button type="submit">Buscar</Button>
+                    ) : (
+                      <Button variant={"outline"} disabled={true}>
+                        <Loader2
+                          size={"2em"}
+                          className="animate-spin"
+                        ></Loader2>
+                      </Button>
+                    )}
+                  </CardFooter>
+                </form>
+              </Card>
+            </TabsContent>
+          ))}
+          {configEnabledVerificationKeys.includes("rut") && (
+            <TabsContent key="rut" value="rut">
+              <Card>
+                <CardHeader>
+                  <CardTitle>RUT</CardTitle>
+                  <CardDescription>
+                    Para poder ver las filtraciones sensibles asociadas a un RUT
+                    en particular, debe verificar su identidad mediante Clave
+                    Única.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
+                    <Link
+                      className="btn-cu btn-m  btn-color-estandar"
+                      href="http://localhost:8000/verify/rut/"
+                      title="Este es el botón Iniciar sesión de ClaveÚnica"
+                    >
+                      <span className="cl-claveunica"></span>
+                      <span className="texto">Iniciar sesión</span>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+      ) : (
+        <div>Servicio no disponible. Discuple las molestias...</div>
+      )}
+    </>
   );
 };
 

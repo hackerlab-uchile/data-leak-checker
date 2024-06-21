@@ -46,6 +46,9 @@ const redColor = "#ED342F";
 
 export default function Home() {
   const router = useRouter();
+  const configEnabledSearchKeys = process.env.NEXT_PUBLIC_ENABLED_SEARCH_KEYS
+    ? process.env.NEXT_PUBLIC_ENABLED_SEARCH_KEYS.split(",")
+    : ["email", "phone", "rut"];
   const searchedValue = router.query.search ? String(router.query.search) : "";
   const searchedType = router.query.type ? String(router.query.type) : "";
   const [queryLoaded, setQueryLoaded] = useState(false);
@@ -58,12 +61,10 @@ export default function Home() {
   const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
   const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
-  const [tabValue, setTabValue] = useState("email");
+  const [tabValue, setTabValue] = useState(configEnabledSearchKeys[0]);
 
   async function handleEmailSearch() {
-    console.log("Searching....");
     const emailQuery = searchEmail.trim().toLowerCase();
-    console.log("Email query:", emailQuery);
     if (emailQuery) {
       setResponseReceived(false);
       setWaitingResponse(true);
@@ -121,42 +122,53 @@ export default function Home() {
     }
   }, [dataLeaks]);
 
-  const searchKeys = [
-    {
-      title: "Email",
-      value: "email",
-      description:
-        "Ingrese el correo electrónico que desea consultar. Se revisará si dicho correo fue encontrado en alguna filtración de datos que tengamos conocimiento.",
-      submitFunc: handleEmailSearch,
-      search: searchEmail,
-      setSearch: setSearchEmail,
-      inputHint: "Consulte un email...",
-      name: "correo",
-    },
-    {
-      title: "RUT",
-      value: "rut",
-      description:
-        "Ingrese el RUT que desea consultar. Se revisará si dicho RUT fue encontrado en alguna filtración de datos que tengamos conocimiento.",
-      submitFunc: handleRutSearch,
-      search: searchRut,
-      setSearch: setSearchRut,
-      inputHint: "Consulte un RUT...",
-      name: "RUT",
-    },
-    {
-      title: "Número telefónico",
-      value: "phone",
-      description:
-        "Ingrese el número telefónico que desea consultar. Se revisará si dicho número fue encontrado en alguna filtración de datos que tengamos conocimiento." +
-        "\nRecuerde que un número celular tiene el siguiente formato 9 XXXX XXXX, mientras que uno particular 22 XXXX XXX.",
-      submitFunc: handlePhoneSearch,
-      search: searchPhone,
-      setSearch: setSearchPhone,
-      inputHint: "Consulte un número telefónico...",
-      name: "número telefónico",
-    },
-  ];
+  function getEnabledSearchKeys() {
+    const availableSearchKeys = [
+      {
+        title: "Email",
+        value: "email",
+        description:
+          "Ingrese el correo electrónico que desea consultar. Se revisará si dicho correo fue encontrado en alguna filtración de datos que tengamos conocimiento.",
+        submitFunc: handleEmailSearch,
+        search: searchEmail,
+        setSearch: setSearchEmail,
+        inputHint: "Consulte un email...",
+        name: "correo",
+      },
+      {
+        title: "RUT",
+        value: "rut",
+        description:
+          "Ingrese el RUT que desea consultar. Se revisará si dicho RUT fue encontrado en alguna filtración de datos que tengamos conocimiento.",
+        submitFunc: handleRutSearch,
+        search: searchRut,
+        setSearch: setSearchRut,
+        inputHint: "Consulte un RUT...",
+        name: "RUT",
+      },
+      {
+        title: "Número telefónico",
+        value: "phone",
+        description:
+          "Ingrese el número telefónico que desea consultar. Se revisará si dicho número fue encontrado en alguna filtración de datos que tengamos conocimiento." +
+          "\nRecuerde que un número celular tiene el siguiente formato 9 XXXX XXXX, mientras que uno particular 22 XXXX XXX.",
+        submitFunc: handlePhoneSearch,
+        search: searchPhone,
+        setSearch: setSearchPhone,
+        inputHint: "Consulte un número telefónico...",
+        name: "número telefónico",
+      },
+    ];
+    let enabledKeys = [];
+    for (let i = 0; i < availableSearchKeys.length; i++) {
+      console.log("Config Enabled Keys:", configEnabledSearchKeys);
+      if (configEnabledSearchKeys.includes(availableSearchKeys[i].value))
+        enabledKeys.push(availableSearchKeys[i]);
+    }
+    return enabledKeys;
+  }
+
+  const searchKeys = getEnabledSearchKeys();
 
   useEffect(() => {
     console.log("Query param: ", searchedValue);
@@ -216,11 +228,12 @@ export default function Home() {
         {/* <h3 className="font-bold">Consultar por:</h3> */}
         <Tabs
           value={tabValue}
-          defaultValue="email"
           onValueChange={(value) => setTabValue(value)}
           className="w-[90%] md:w-[80%] max-w-[1280px]"
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList
+            className={`grid w-full grid-cols-${configEnabledSearchKeys.length}`}
+          >
             {searchKeys.map((item) => (
               <TabsTrigger
                 onClick={clearSearchIput}

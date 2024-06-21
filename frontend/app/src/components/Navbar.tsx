@@ -11,7 +11,7 @@ interface NavbarItem {
 }
 
 const NAVBAR_ITEMS: NavbarItem[] = [
-  { title: "Acerca de", href: "/about" },
+  // { title: "Acerca de", href: "/about" },
   // { title: "Filtraciones sensibles", href: "/verification" },
   // {title: "Estadísticas", href: "/stats"},
   // {title: "¿Qué hacer si mis datos han sido filtrados?", href: "/what-now"},

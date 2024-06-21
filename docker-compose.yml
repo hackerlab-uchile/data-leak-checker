@@ -53,6 +53,8 @@ services:
       - MAX_CODE_TRIES
       - MAX_CODES_CREATED
       - CODE_MINUTES_RANGE_LIMIT
+      - ENABLED_SEARCH_KEYS
+      - ENABLED_VERIFICATION_SEARCH_KEYS
     depends_on:
       db:
         condition: service_healthy
@@ -70,6 +72,8 @@ services:
       - NEXT_PUBLIC_BACKEND_HOST
       - NEXT_PUBLIC_BACKEND_PORT
       - NEXT_PUBLIC_PROD
+      - NEXT_PUBLIC_ENABLED_SEARCH_KEYS
+      - NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS
 
 volumes:
   db-data:
