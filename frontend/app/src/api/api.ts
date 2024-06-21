@@ -1,5 +1,6 @@
 import { DataLeak } from "@/models/Breach";
 import { ErrorMsg } from "@/models/ErrorMsg";
+import { User } from "@/models/User";
 import { VerificationResponse } from "@/models/VerificationResponse";
 import apiClient from "@/utils/axios";
 
@@ -166,5 +167,37 @@ export async function getSensitiveDataLeaksDemo(): Promise<
     }
     errorMsg.message = "Credenciales inválidas";
     return [[], errorMsg];
+  }
+}
+
+export async function get_current_user(): Promise<[User | null, ErrorMsg]> {
+  let errorMsg: ErrorMsg = { statusCode: 200, message: "" };
+  try {
+    let response = await apiClient.get<User>("/user/me/", {
+      withCredentials: true,
+    });
+    return [response.data, errorMsg];
+  } catch (error: any) {
+    if (error.response) {
+      errorMsg.statusCode = error.response.status;
+    }
+    errorMsg.message = "Credenciales inválidas";
+    return [null, errorMsg];
+  }
+}
+
+export async function logout_user() {
+  let errorMsg: ErrorMsg = { statusCode: 200, message: "" };
+  try {
+    let response = await apiClient.get("/user/logout/", {
+      withCredentials: true,
+    });
+    return [response.data, errorMsg];
+  } catch (error: any) {
+    if (error.response) {
+      errorMsg.statusCode = error.response.status;
+    }
+    errorMsg.message = "Credenciales inválidas";
+    return [null, errorMsg];
   }
 }

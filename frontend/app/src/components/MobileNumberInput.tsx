@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
-import { FaSearch } from "react-icons/fa";
 
-export default function Search({
+export default function MobileNumberInput({
   placeholder,
   searchTerm,
   setSearchTerm,
@@ -21,14 +20,16 @@ export default function Search({
       </label>
       <input
         value={searchTerm}
-        className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+        className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-20 text-sm outline-2 placeholder:text-gray-500"
         placeholder={placeholder}
         name={"search"}
         onChange={(e) => {
           handleSearch(e.target.value);
         }}
       />
-      <FaSearch className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+      <div className="absolute left-3 top-1/2 h-[20px] w-[60px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900">
+        <p>+56 9 |</p>
+      </div>
     </div>
   );
 }

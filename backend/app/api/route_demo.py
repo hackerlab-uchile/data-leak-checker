@@ -33,7 +33,7 @@ def get_breaches_demo(
         return []
     elif payload.dtype == "rut" and not payload.value.isnumeric():
         return []
-    elif dtype is None or payload.dtype == "phone":
+    elif dtype is None:  # or payload.dtype == "phone":
         return []
 
     n_limit = random.randint(2, 5)

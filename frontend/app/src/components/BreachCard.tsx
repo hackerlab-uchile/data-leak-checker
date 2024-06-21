@@ -11,8 +11,13 @@ export default function BreachCard({
   return (
     <div
       id={`${index}`}
-      className="flex flex-col items-start my-1 p-4 border rounded-lg w-full"
+      className={`flex flex-col items-start my-1 p-4 border rounded-lg w-full ${
+        breach.is_sensitive ? "border-indigo-600" : ""
+      }`}
     >
+      {breach.is_sensitive && (
+        <p className="text-indigo-600">*Filtración Sensible*</p>
+      )}
       <h3 className="font-bold text-xl">
         {`${breach.name} (${breach.breach_date.slice(0, 4)})`}
       </h3>

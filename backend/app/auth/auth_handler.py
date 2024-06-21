@@ -7,6 +7,7 @@ from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyCookie
 from schemas.data_leak import DataLeakInput
 from schemas.token import TokenPayload
+from schemas.user import UserInfo
 
 cookie_scheme = APIKeyCookie(
     name="token", description="Allows sensitive breaches search", auto_error=False
@@ -48,19 +49,31 @@ def get_jwt_token(token: Optional[str] = Security(cookie_scheme)) -> TokenPayloa
     return TokenPayload(value=value, dtype=dtype)
 
 
+def get_current_active_user(
+    token: Optional[str] = Security(cookie_scheme),
+) -> UserInfo | None:
+    if token is None:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        value = payload.get("value")
+        dtype = payload.get("dtype")
+        exp = payload.get("exp")
+        if value is None or dtype is None or exp is None:
+            return None
+    except jwt.InvalidTokenError:
+        return None
+    return UserInfo(value=value, dtype=dtype, exp=exp)
+
+
 def validate_sensitive_search(
     payload: DataLeakInput, token: Optional[str] = Security(cookie_scheme)
 ) -> bool:
     try:
-        print("Token: ", token)
         response = False
         token_decode = get_jwt_token(token=token)
-        print("Valid token? ", True)
-        if payload.dtype == token_decode.dtype and (
-            payload.value == "nico@example.com" or payload.value == token_decode.value
-        ):
+        if payload.dtype == token_decode.dtype and payload.value == token_decode.value:
             response = True
     except HTTPException as e:
-        print("ERROOOOOOOOR!!!:", e)
         return False
     return response

@@ -2,6 +2,8 @@ import React from "react";
 
 import Link from "next/link";
 import { Button } from "./ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import SessionInfoButton from "./SessionInfoButton";
 
 interface NavbarItem {
   title: string;
@@ -10,7 +12,7 @@ interface NavbarItem {
 
 const NAVBAR_ITEMS: NavbarItem[] = [
   { title: "Acerca de", href: "/about" },
-  { title: "Filtraciones sensibles", href: "/verification" },
+  // { title: "Filtraciones sensibles", href: "/verification" },
   // {title: "Estadísticas", href: "/stats"},
   // {title: "¿Qué hacer si mis datos han sido filtrados?", href: "/what-now"},
   // {title: "¿Cómo funciona?", href: "/how-it-works"},
@@ -18,6 +20,7 @@ const NAVBAR_ITEMS: NavbarItem[] = [
 ];
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
   return (
     <>
       <nav className="w-full relative top-0 z-40 ">
@@ -32,14 +35,21 @@ const Navbar = () => {
             </div>
             {/* <div className="flex w-3/4 flex-wrap items-center justify-between"> */}
             <div className="flex sm:w-3/4 gap-x-5 flex-wrap items-center justify-center">
+              {/* <div className="flex flex-row sm:w-3/4 gap-x-5 flex-wrap "> */}
               {NAVBAR_ITEMS.map((item) => (
-                <Button key={item.title} variant="outline" asChild>
+                <Button
+                  key={item.title}
+                  className="self-center"
+                  variant="outline"
+                  asChild
+                >
                   <Link href={item.href} className="block">
                     <h3 className="font-bold">{item.title}</h3>
                   </Link>
                 </Button>
               ))}
             </div>
+            <SessionInfoButton />
           </div>
         </div>
       </nav>

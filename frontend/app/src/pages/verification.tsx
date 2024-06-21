@@ -33,11 +33,13 @@ import {
 } from "@/components/ui/input-otp";
 
 import { GrPowerReset } from "react-icons/gr";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import Link from "next/link";
 import { VerificationResponse } from "@/models/VerificationResponse";
+import MobileNumberInput from "@/components/MobileNumberInput";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function VerificationHome() {
   const [step, setStep] = useState<number>(0);
@@ -193,20 +195,19 @@ const SearchContent = ({
 
   async function handlePhoneSubmit() {
     let cleanSearch = search.replace(/\s+/g, "");
-    let phoneRegex = /^(((\+)?56)?9)?[\d]{8}$/;
+    let phoneRegex = /^[\d]{8}$/;
     let validPhoneNumber = phoneRegex.test(cleanSearch);
-    console.log("Search: ", search);
-    console.log("cleanSearch: ", cleanSearch);
-    console.log("validPhoneNumber: ", validPhoneNumber);
     if (!cleanSearch || waitingResponse) {
       return;
     } else if (!validPhoneNumber) {
       setInputError("Formato de número celular inválido");
       return;
     }
+    let finalSearch = `+569${cleanSearch}`;
+    setSearch(finalSearch);
     setWaitingResponse(true);
     setType(QueryType.Phone);
-    let response: VerificationResponse = await sendVerificationSMS(cleanSearch);
+    let response: VerificationResponse = await sendVerificationSMS(finalSearch);
     setWaitingResponse(false);
     if (response.code_length === undefined) {
       setInputError(response.message);
@@ -232,7 +233,7 @@ const SearchContent = ({
       value: "phone",
       description:
         "Ingrese el número celular que desea consultar. Se le enviará un código de verificación a su al celular ingresado mediante SMS." +
-        "\nRecuerde que un número celular tiene el siguiente formato +56 9 XXXX XXXX, 56 9 XXXX XXXX o 9 XXXX XXXX.",
+        "\nRecuerde que un número celular tiene el siguiente formato: +56 9 XXXX XXXX.",
       submitFunc: handlePhoneSubmit,
       search: search,
       setSearch: setSearch,
@@ -283,11 +284,19 @@ const SearchContent = ({
             >
               <CardContent className="space-y-2">
                 <div className="flex flex-col z-10 max-w-5xl w-full items-center self-center justify-self-center justify-between font-mono text-sm lg:flex">
-                  <Search
-                    placeholder={item.inputHint}
-                    searchTerm={item.search}
-                    setSearchTerm={item.setSearch}
-                  />
+                  {item.value === "phone" ? (
+                    <MobileNumberInput
+                      placeholder={item.inputHint}
+                      searchTerm={item.search}
+                      setSearchTerm={item.setSearch}
+                    />
+                  ) : (
+                    <Search
+                      placeholder={item.inputHint}
+                      searchTerm={item.search}
+                      setSearchTerm={item.setSearch}
+                    />
+                  )}
                   {inputError !== "" && (
                     <p className="text-red-hackerlab text-center">
                       {inputError}
@@ -350,14 +359,15 @@ const CodeVerification = ({
   searchType: QueryType;
   verificationCodeLength: number;
 }) => {
-  const COOLDOWN_WAIT: number = 30;
+  const COOLDOWN_WAIT: number = 45;
   const [verificationCode, setVerificationCode] = useState<string>("");
   const [inputError, setInputError] = useState("");
   const [waitingResponse, setWaitingResponse] = useState(false);
   const [loadingNextPage, setLoadingNextPage] = useState(false);
   const [timeLeft, setTimeLeft] = useState(COOLDOWN_WAIT);
   const [startCooldown, setStartCooldown] = useState(true);
-  const { push } = useRouter();
+  const router = useRouter();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   async function handleResendCode() {
@@ -376,7 +386,7 @@ const CodeVerification = ({
     if (searchType == QueryType.Email) {
       response = await sendVerificationEmail(search);
     } else if (searchType == QueryType.Phone) {
-      response = await sendVerificationEmail(search);
+      response = await sendVerificationSMS(search);
     } else {
       response = {
         message:
@@ -408,7 +418,10 @@ const CodeVerification = ({
       if (isValid && errorMsg === "") {
         setInputError("");
         setLoadingNextPage(true);
-        push("/sensitive");
+        login();
+        // router.push(`/?search=${search}&type=${searchType}`, "/", {
+        //   shallow: true,
+        // });
       } else if (!isValid && errorMsg === "") {
         setInputError("Código incorrecto");
       } else {

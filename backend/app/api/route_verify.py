@@ -202,7 +202,6 @@ async def oauth_verification(request: Request):
 async def verify_code(
     verification_code: VerificationCodeInput, db: Session = Depends(get_db)
 ):
-    # code_tries =
     vcode = get_valid_verification_code_if_correct(verification_code, db)
     if vcode is None:
         return JSONResponse(

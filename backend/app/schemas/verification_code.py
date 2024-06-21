@@ -1,5 +1,8 @@
+from typing import Union
+
 from models.verification_code import CODE_LENGTH
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, EmailStr, Field, PositiveInt
+from schemas.custom_fields import ChileanMobileNumber
 
 
 class VerificationCodeBase(BaseModel):
@@ -12,7 +15,7 @@ class VerificationCodeCreate(VerificationCodeBase):
 
 
 class VerificationCodeInput(VerificationCodeBase):
-    value: str
+    value: Union[EmailStr, ChileanMobileNumber]
     dtype: str
 
 

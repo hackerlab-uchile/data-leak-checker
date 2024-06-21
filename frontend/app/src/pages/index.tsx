@@ -46,6 +46,9 @@ const redColor = "#ED342F";
 
 export default function Home() {
   const router = useRouter();
+  const searchedValue = router.query.search ? String(router.query.search) : "";
+  const searchedType = router.query.type ? String(router.query.type) : "";
+  const [queryLoaded, setQueryLoaded] = useState(false);
   const [searchEmail, setSearchEmail] = useState("");
   const [responseReceived, setResponseReceived] = useState(false);
   const [error, setError] = useState<boolean>(false);
@@ -55,10 +58,12 @@ export default function Home() {
   const [dataLeaks, setDataLeaks] = useState<Array<DataLeak>>([]);
   const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
+  const [tabValue, setTabValue] = useState("email");
 
-  async function handleEmailSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleEmailSearch() {
+    console.log("Searching....");
     const emailQuery = searchEmail.trim().toLowerCase();
+    console.log("Email query:", emailQuery);
     if (emailQuery) {
       setResponseReceived(false);
       setWaitingResponse(true);
@@ -72,8 +77,7 @@ export default function Home() {
     }
   }
 
-  async function handleRutSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleRutSearch() {
     const rutQuery = searchRut
       .trim()
       .replace(/\s/g, "")
@@ -95,8 +99,7 @@ export default function Home() {
     }
   }
 
-  async function handlePhoneSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handlePhoneSearch() {
     const phoneQuery = searchPhone.trim();
     if (phoneQuery) {
       setResponseReceived(false);
@@ -155,10 +158,40 @@ export default function Home() {
     },
   ];
 
+  useEffect(() => {
+    console.log("Query param: ", searchedValue);
+    if (searchedValue) {
+      console.log("SearchedValue: ", searchedValue);
+      console.log("SearchedType: ", searchedType);
+      for (let i = 0; i < searchKeys.length; i++) {
+        if (searchKeys[i]["value"] === searchedType) {
+          console.log("Se encontró un match! Buscandoo....");
+          setTabValue(searchedType);
+          searchKeys[i].setSearch(searchedValue);
+          console.log("Antes de buscar!");
+          setQueryLoaded(true);
+          console.log("Funcionó!");
+        }
+      }
+    }
+  }, [searchedValue, searchedType]);
+
+  useEffect(() => {
+    if (queryLoaded) {
+      for (let i = 0; i < searchKeys.length; i++) {
+        if (searchKeys[i]["value"] === searchedType) {
+          searchKeys[i].submitFunc();
+        }
+      }
+      setQueryLoaded(false);
+    }
+  }, [queryLoaded]);
+
   function clearSearchIput() {
     setSearchEmail("");
     setSearchPhone("");
     setSearchRut("");
+    router.replace("/", undefined, { shallow: true });
     setResponseReceived(false);
   }
 
@@ -182,7 +215,9 @@ export default function Home() {
         <POCMessage></POCMessage>
         {/* <h3 className="font-bold">Consultar por:</h3> */}
         <Tabs
+          value={tabValue}
           defaultValue="email"
+          onValueChange={(value) => setTabValue(value)}
           className="w-[90%] md:w-[80%] max-w-[1280px]"
         >
           <TabsList className="grid w-full grid-cols-3">
@@ -204,7 +239,10 @@ export default function Home() {
                   <CardDescription>{item.description}</CardDescription>
                 </CardHeader>
                 <form
-                  onSubmit={item.submitFunc}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    item.submitFunc();
+                  }}
                   autoComplete="off"
                   className="w-full"
                 >

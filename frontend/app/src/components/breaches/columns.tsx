@@ -106,7 +106,9 @@ export function getLeakTableRows(dataLeaks: DataLeak[]): TypesLeak[] {
   const rawColumns: string[] = getDataFoundList(dataLeaks);
   return dataLeaks.map((dl: DataLeak) => {
     let data: TypesLeak = {
-      filtración: `${dl.breach.name} (${dl.breach.breach_date.slice(0, 4)})`,
+      filtración: `${dl.breach.name}${
+        dl.breach.is_sensitive ? "**" : ""
+      } (${dl.breach.breach_date.slice(0, 4)})`,
     };
     rawColumns.forEach((col) => {
       if ([dl.data_type, ...dl.found_with].includes(col)) {
