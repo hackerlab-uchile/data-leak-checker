@@ -12,7 +12,9 @@ from core.config import (
     FRONTEND_URL,
     IN_PROD,
     JWT_EXPIRE_MINUTES,
+    SMTP_FROM_NAME,
     SMTP_PASSWORD,
+    SMTP_PORT,
     SMTP_SERVER,
     SMTP_USERNAME,
     TWILIO_ACCOUNT_SID,
@@ -37,6 +39,10 @@ from repositories.verification_code_repository import (
 from schemas.custom_fields import ChileanMobileNumber
 from schemas.verification_code import VerificationCodeInput
 from sqlalchemy.orm import Session
+
+from backend.app.dependencies.data_type_dependency import (
+    EnabledVerificationSearchKeyChecker,
+)
 
 router = APIRouter()
 
@@ -77,8 +83,8 @@ def get_mail_conf() -> ConnectionConfig | None:
             MAIL_USERNAME=SMTP_USERNAME,
             MAIL_PASSWORD=SMTP_PASSWORD,
             MAIL_FROM=SMTP_USERNAME,
-            MAIL_FROM_NAME="Data-Leak-Checker",
-            MAIL_PORT=587,
+            MAIL_FROM_NAME=SMTP_FROM_NAME,
+            MAIL_PORT=SMTP_PORT,
             MAIL_SERVER=SMTP_SERVER,
             MAIL_STARTTLS=True,
             MAIL_SSL_TLS=False,
@@ -91,7 +97,13 @@ def get_mail_conf() -> ConnectionConfig | None:
     return None
 
 
-@router.post("/send/email/", dependencies=[Depends(verify_host_rate_limting)])
+@router.post(
+    "/send/email/",
+    dependencies=[
+        Depends(EnabledVerificationSearchKeyChecker("email")),
+        Depends(verify_host_rate_limting),
+    ],
+)
 async def send_email_verify(
     background_task: BackgroundTasks,
     payload: EmailBody,
@@ -128,7 +140,13 @@ async def send_email_verify(
     return JSONResponse(status_code=503, content={"message": "Service unavailable"})
 
 
-@router.post("/send/sms/", dependencies=[Depends(verify_host_rate_limting)])
+@router.post(
+    "/send/sms/",
+    dependencies=[
+        Depends(EnabledVerificationSearchKeyChecker("phone")),
+        Depends(verify_host_rate_limting),
+    ],
+)
 async def send_sms_verify(
     payload: PhoneBody, request: Request, db: Session = Depends(get_db)
 ):
@@ -160,7 +178,7 @@ async def send_sms_verify(
     return JSONResponse(status_code=400, content={"message": "Sms was not sent"})
 
 
-@router.get("/rut/")
+@router.get("/rut/", dependencies=[Depends(EnabledVerificationSearchKeyChecker("rut"))])
 async def verify_rut(request: Request):
     redirect_uri = request.url_for("oauth_verification")
     if oauth.google is None:
@@ -169,7 +187,9 @@ async def verify_rut(request: Request):
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/oauth/", dependencies=[Depends(verify_host_rate_limting)])
+@router.get(
+    "/oauth/", dependencies=[Depends(EnabledVerificationSearchKeyChecker("rut"))]
+)
 async def oauth_verification(request: Request):
     if oauth.google is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -225,6 +245,3 @@ async def verify_code(
         samesite="strict",
     )
     return response
-
-
-# TODO: HACER UN LOGOUT

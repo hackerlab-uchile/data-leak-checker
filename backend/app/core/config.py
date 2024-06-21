@@ -46,6 +46,8 @@ POSTGRES_TEST_DB: str = get_env_value("POSTGRES_TEST_DB")
 SMTP_USERNAME: str = get_env_value("SMTP_USERNAME")
 SMTP_PASSWORD: str = get_env_value("SMTP_PASSWORD")
 SMTP_SERVER: str = get_env_value("SMTP_SERVER")
+SMTP_PORT: int = get_int_from_env("SMTP_PORT", 587)
+SMTP_FROM_NAME: str = get_env_value("SMTP_FROM_NAME", "Data-Leak-Checker")
 
 # JWT Config
 JWT_SECRET: str = get_env_value("JWT_SECRET")
@@ -74,8 +76,8 @@ CODE_MINUTES_RANGE_LIMIT: int = get_int_from_env("CODE_MINUTES_RANGE_LIMIT", 30)
 ENABLED_SEARCH_KEYS: list[str] = get_env_value(
     "ENABLED_SEARCH_KEYS", "email,phone,rut"
 ).split(",")
-ENABLED_SENSITIVE_SEARCH_KEYS: list[str] = get_env_value(
-    "ENABLED_SENSITIVE_SEARCH_KEYS", "email,phone,rut"
+ENABLED_VERIFICATION_SEARCH_KEYS: list[str] = get_env_value(
+    "ENABLED_VERIFICATION_SEARCH_KEYS", "email,phone,rut"
 ).split(",")
 
 # Frontend
