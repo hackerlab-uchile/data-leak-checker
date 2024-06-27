@@ -173,18 +173,12 @@ export default function Home() {
   const searchKeys = getEnabledSearchKeys();
 
   useEffect(() => {
-    console.log("Query param: ", searchedValue);
     if (searchedValue) {
-      console.log("SearchedValue: ", searchedValue);
-      console.log("SearchedType: ", searchedType);
       for (let i = 0; i < searchKeys.length; i++) {
         if (searchKeys[i]["value"] === searchedType) {
-          console.log("Se encontró un match! Buscandoo....");
           setTabValue(searchedType);
           searchKeys[i].setSearch(searchedValue);
-          console.log("Antes de buscar!");
           setQueryLoaded(true);
-          console.log("Funcionó!");
         }
       }
     }
@@ -192,11 +186,7 @@ export default function Home() {
 
   useEffect(() => {
     if (queryLoaded) {
-      for (let i = 0; i < searchKeys.length; i++) {
-        if (searchKeys[i]["value"] === searchedType) {
-          searchKeys[i].submitFunc();
-        }
-      }
+      setResponseReceived(false);
       setQueryLoaded(false);
     }
   }, [queryLoaded]);
