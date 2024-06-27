@@ -203,7 +203,9 @@ async def oauth_verification(request: Request):
     # 3) Entregar JWT al usuario
     associated_value = "11111111-1"
     token = create_jwt_token(associated_value, "rut")
-    response = RedirectResponse(FRONTEND_URL + "/sensitive", status_code=302)
+    response = RedirectResponse(
+        FRONTEND_URL + f"/?search={associated_value}&type=rut", status_code=302
+    )
     response.set_cookie(
         key="token",
         value=token,
