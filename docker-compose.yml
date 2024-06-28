@@ -55,6 +55,8 @@ services:
       - CODE_MINUTES_RANGE_LIMIT
       - ENABLED_SEARCH_KEYS
       - ENABLED_VERIFICATION_SEARCH_KEYS
+      - CLOUDFLARE_SECRET_KEY
+      - CLOUDFLARE_ENABLED
     depends_on:
       db:
         condition: service_healthy
@@ -74,6 +76,8 @@ services:
       - NEXT_PUBLIC_PROD
       - NEXT_PUBLIC_ENABLED_SEARCH_KEYS
       - NEXT_PUBLIC_ENABLED_VERIFICATION_SEARCH_KEYS
+      - NEXT_PUBLIC_CLOUDFLARE_SITE_KEY
+      - NEXT_PUBLIC_CLOUDFLARE_ENABLED
 
 volumes:
   db-data:

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { DataLeak } from "@/models/Breach";
 import {
   getDataLeaksByValueAndType,
@@ -42,8 +42,16 @@ import BreachCard from "@/components/BreachCard";
 import AlertMessage from "@/components/AlertMessage";
 import { safetyTips } from "@/utils/webSafetyTips";
 import { useAuth } from "@/contexts/AuthContext";
+import Script from "next/script";
+import Turnstile from "@/components/Turnstile";
 
 const redColor = "#ED342F";
+const CLOUDFLARE_ENABLED = process.env.NEXT_PUBLIC_CLOUDFLARE_ENABLED;
+// const CLOUDFLARE_SITE_KEY = process.env.NEXT_PUBLIC_CLOUDFLARE_SITE_KEY;
+// const CLOUDFLARE_SITE_KEY = "1x00000000000000000000AA"; // Always Pass
+// const CLOUDFLARE_SITE_KEY = "2x00000000000000000000AB"; // Always Blocks
+// const CLOUDFLARE_SITE_KEY = "1x00000000000000000000BB"; // Always Passes Invisible
+const CLOUDFLARE_SITE_KEY = "3x00000000000000000000FF"; // Forces interactive challenge
 
 export default function Home() {
   const { user } = useAuth();
@@ -56,7 +64,7 @@ export default function Home() {
   const [queryLoaded, setQueryLoaded] = useState(false);
   const [searchEmail, setSearchEmail] = useState("");
   const [responseReceived, setResponseReceived] = useState(false);
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const [waitingResponse, setWaitingResponse] = useState(false);
   const [searchRut, setSearchRut] = useState("");
   const [searchPhone, setSearchPhone] = useState("");
@@ -64,56 +72,54 @@ export default function Home() {
   const [columns, setColumns] = useState<ColumnDef<TypesLeak>[]>([]);
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
   const [tabValue, setTabValue] = useState(configEnabledSearchKeys[0]);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  async function handleEmailSearch() {
+  async function handleSearch(query: string, queryType: QueryType) {
+    console.log("Token? ", turnstileToken);
+    if (turnstileToken == null) {
+      console.log("Token nulllll? ", turnstileToken);
+      setError("Por favor, complete el CAPTCHA");
+      return;
+    }
+    setResponseReceived(false);
+    setWaitingResponse(true);
+    const [dataLeaksList, gotError]: [DataLeak[], boolean] =
+      // await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
+      await getDataLeaksByValueAndTypeDemo(query, queryType);
+    if (gotError) {
+      setError(
+        "Ha ocurrido un error innesperado, inténtelo de nuevo más tarde."
+      );
+    } else {
+      setError("");
+    }
+    setDataLeaks(dataLeaksList);
+    setResponseReceived(true);
+    setWaitingResponse(false);
+  }
+
+  async function handleEmailInput() {
     const emailQuery = searchEmail.trim().toLowerCase();
     if (emailQuery) {
-      setResponseReceived(false);
-      setWaitingResponse(true);
-      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        // await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
-        await getDataLeaksByValueAndTypeDemo(emailQuery, QueryType.Email);
-      setError(gotError);
-      setDataLeaks(dataLeaksList);
-      setResponseReceived(true);
-      setWaitingResponse(false);
+      handleSearch(emailQuery, QueryType.Email);
     }
   }
 
-  async function handleRutSearch() {
+  async function handleRutInput() {
     const rutQuery = searchRut
       .trim()
       .replace(/\s/g, "")
       .replace(/\./g, "")
       .replace("-", "");
     if (rutQuery) {
-      setResponseReceived(false);
-      setWaitingResponse(true);
-      console.log("Query:", rutQuery);
-      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        //   await getDataLeaksByValueAndType(rutQuery, QueryType.Rut);
-        await getDataLeaksByValueAndTypeDemo(rutQuery, QueryType.Rut);
-      setError(gotError);
-      setDataLeaks(dataLeaksList);
-      setResponseReceived(true);
-      setWaitingResponse(false);
-    } else {
-      console.log("Not valid rut!");
+      handleSearch(rutQuery, QueryType.Rut);
     }
   }
 
-  async function handlePhoneSearch() {
+  async function handlePhoneInput() {
     const phoneQuery = searchPhone.trim();
     if (phoneQuery) {
-      setResponseReceived(false);
-      setWaitingResponse(true);
-      const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-        // await getDataLeaksByValueAndType(phoneQuery, QueryType.Phone);
-        await getDataLeaksByValueAndTypeDemo(phoneQuery, QueryType.Phone);
-      setError(gotError);
-      setDataLeaks(dataLeaksList);
-      setResponseReceived(true);
-      setWaitingResponse(false);
+      handleSearch(phoneQuery, QueryType.Phone);
     }
   }
 
@@ -131,7 +137,7 @@ export default function Home() {
         value: "email",
         description:
           "Ingrese el correo electrónico que desea consultar. Se revisará si dicho correo fue encontrado en alguna filtración de datos que tengamos conocimiento.",
-        submitFunc: handleEmailSearch,
+        submitFunc: handleEmailInput,
         search: searchEmail,
         setSearch: setSearchEmail,
         inputHint: "Consulte un email...",
@@ -142,7 +148,7 @@ export default function Home() {
         value: "rut",
         description:
           "Ingrese el RUT que desea consultar. Se revisará si dicho RUT fue encontrado en alguna filtración de datos que tengamos conocimiento.",
-        submitFunc: handleRutSearch,
+        submitFunc: handleRutInput,
         search: searchRut,
         setSearch: setSearchRut,
         inputHint: "Consulte un RUT...",
@@ -154,7 +160,7 @@ export default function Home() {
         description:
           "Ingrese el número telefónico que desea consultar. Se revisará si dicho número fue encontrado en alguna filtración de datos que tengamos conocimiento." +
           "\nRecuerde que un número celular tiene el siguiente formato 9 XXXX XXXX, mientras que uno particular 22 XXXX XXX.",
-        submitFunc: handlePhoneSearch,
+        submitFunc: handlePhoneInput,
         search: searchPhone,
         setSearch: setSearchPhone,
         inputHint: "Consulte un número telefónico...",
@@ -163,7 +169,6 @@ export default function Home() {
     ];
     let enabledKeys = [];
     for (let i = 0; i < availableSearchKeys.length; i++) {
-      console.log("Config Enabled Keys:", configEnabledSearchKeys);
       if (configEnabledSearchKeys.includes(availableSearchKeys[i].value))
         enabledKeys.push(availableSearchKeys[i]);
     }
@@ -195,6 +200,7 @@ export default function Home() {
     setSearchEmail("");
     setSearchPhone("");
     setSearchRut("");
+    setError("");
     router.replace("/", undefined, { shallow: true });
     setResponseReceived(false);
   }
@@ -260,7 +266,13 @@ export default function Home() {
                       />
                     </div>
                   </CardContent>
-                  <CardFooter className="flex flex-row items-center justify-center">
+                  <CardFooter className="flex flex-col gap-y-5 items-center justify-center">
+                    {CLOUDFLARE_ENABLED?.toLowerCase() === "true" && (
+                      <Turnstile
+                        siteKey={CLOUDFLARE_SITE_KEY}
+                        onTokenChange={setTurnstileToken}
+                      ></Turnstile>
+                    )}
                     <Button type="submit">Buscar</Button>
                   </CardFooter>
                 </form>
@@ -273,86 +285,79 @@ export default function Home() {
                   </p>
                 </div>
               )}
+              {error && (
+                <div className="my-5 w-full text-center">
+                  <p className="text-lg text-red-hackerlab">{error}</p>
+                </div>
+              )}
               {responseReceived ? (
-                <>
-                  {!error ? (
-                    <div className="flex flex-col mt-5 w-full items-center justify-start">
-                      <div className="flex flex-col w-full self-start justifiy-start items-center">
-                        {dataLeaks.length > 0 ? (
-                          <>
-                            <IconContext.Provider
-                              value={{ color: `${redColor}` }}
-                            >
-                              <PiShieldWarningFill
-                                fontSize="3.5em"
-                                className="self-center"
-                              />
-                              <AlertMessage
-                                variant="danger"
-                                message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
-                              />
-                            </IconContext.Provider>
-                            {/* <div className="container mx-auto py-10"> */}
-                            <div className="w-full mx-auto py-5">
-                              <LeaksTable
-                                columns={columns}
-                                data={tableData}
-                                queried_type={item.name}
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <FaCheckCircle
-                              // color="green"
-                              fontSize="3.5em"
-                              className="self-center text-green-hackerlab"
-                            />
-                            <AlertMessage
-                              variant="safe"
-                              message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
-                            />
-                            <div className="p-3 my-5 flex flex-col justify-center w-full sm:w-[90%] border rounded-md border-cyan-400">
-                              <h3 className="flex flex-row text-lg font-bold underline">
-                                <FcIdea className="mt-1"></FcIdea>
-                                Recomendaciones de seguridad
-                              </h3>
-                              {safetyTips.map((tip, index) => (
-                                <div
-                                  className="ml-3 items-start flex flex-row gap-1 text-lg"
-                                  key={index}
-                                >
-                                  <AiOutlineSafety
-                                    className="mt-1.5 shrink-0"
-                                    color="green"
-                                  ></AiOutlineSafety>
-                                  <p className="font-thin m-0">
-                                    <b>{tip.title}: </b>
-                                    {tip.value}
-                                  </p>
-                                </div>
-                              ))}
-                              <p></p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      {dataLeaks.map((dLeak, index) => (
-                        <BreachCard
-                          key={index}
-                          breach={dLeak.breach}
-                          index={index}
+                <div className="flex flex-col mt-5 w-full items-center justify-start">
+                  <div className="flex flex-col w-full self-start justifiy-start items-center">
+                    {dataLeaks.length > 0 ? (
+                      <>
+                        <IconContext.Provider value={{ color: `${redColor}` }}>
+                          <PiShieldWarningFill
+                            fontSize="3.5em"
+                            className="self-center"
+                          />
+                          <AlertMessage
+                            variant="danger"
+                            message={`¡Este ${item.name} ha sido visto en ${dataLeaks.length} filtraciones de nuestro conocimiento!`}
+                          />
+                        </IconContext.Provider>
+                        {/* <div className="container mx-auto py-10"> */}
+                        <div className="w-full mx-auto py-5">
+                          <LeaksTable
+                            columns={columns}
+                            data={tableData}
+                            queried_type={item.name}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <FaCheckCircle
+                          // color="green"
+                          fontSize="3.5em"
+                          className="self-center text-green-hackerlab"
                         />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="my-5 w-full text-center">
-                      <p className="text-lg text-red-hackerlab">
-                        Error: por favor, inténtelo de nuevo más tarde
-                      </p>
-                    </div>
-                  )}
-                </>
+                        <AlertMessage
+                          variant="safe"
+                          message={`¡Este ${item.name} no ha sido encontrado en filtraciones de nuestro conocimiento!`}
+                        />
+                        <div className="p-3 my-5 flex flex-col justify-center w-full sm:w-[90%] border rounded-md border-cyan-400">
+                          <h3 className="flex flex-row text-lg font-bold underline">
+                            <FcIdea className="mt-1"></FcIdea>
+                            Recomendaciones de seguridad
+                          </h3>
+                          {safetyTips.map((tip, index) => (
+                            <div
+                              className="ml-3 items-start flex flex-row gap-1 text-lg"
+                              key={index}
+                            >
+                              <AiOutlineSafety
+                                className="mt-1.5 shrink-0"
+                                color="green"
+                              ></AiOutlineSafety>
+                              <p className="font-thin m-0">
+                                <b>{tip.title}: </b>
+                                {tip.value}
+                              </p>
+                            </div>
+                          ))}
+                          <p></p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {dataLeaks.map((dLeak, index) => (
+                    <BreachCard
+                      key={index}
+                      breach={dLeak.breach}
+                      index={index}
+                    />
+                  ))}
+                </div>
               ) : (
                 <>
                   {waitingResponse ? (
