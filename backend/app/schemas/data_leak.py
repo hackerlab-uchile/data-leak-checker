@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, PositiveInt
 from schemas.breaches import Breach as BreachSchema
@@ -10,6 +10,7 @@ from schemas.data_types import DataType as DataTypeSchema
 class DataLeakInput(BaseModel):
     value: str
     dtype: AvailableSearchKeys
+    turnstile_response: Optional[str] = None
 
 
 class DataLeakBase(BaseModel):

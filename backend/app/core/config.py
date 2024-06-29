@@ -18,7 +18,7 @@ def get_env_value(key, default="") -> str:
     return value
 
 
-def get_int_from_env(key, default=0) -> int:
+def get_int_from_env(key, default: int = 0) -> int:
     try:
         value = int(os.environ.get(key, default=default))
     except ValueError:
@@ -28,6 +28,15 @@ def get_int_from_env(key, default=0) -> int:
         )
         return default
     return value
+
+
+def get_bool_from_env(key, default: bool = False) -> bool:
+    value = os.environ.get(key, default=None)
+    if value is not None and value.lower() == "true":
+        return True
+    elif value is not None and value.lower() == "false":
+        return False
+    return default
 
 
 # General purpopse
@@ -82,3 +91,7 @@ ENABLED_VERIFICATION_SEARCH_KEYS: list[str] = get_env_value(
 
 # Frontend
 FRONTEND_URL: str = get_env_value("NEXT_PUBLIC_FRONTEND_URL", "http://localhost:3000")
+
+# Cloudflare
+CLOUDFLARE_SECRET_KEY: str = get_env_value("CLOUDFLARE_SECRET_KEY")
+CLOUDFLARE_ENABLED: bool = get_bool_from_env("CLOUDFLARE_ENABLED", True)

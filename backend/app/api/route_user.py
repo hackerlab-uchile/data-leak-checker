@@ -1,7 +1,6 @@
 from auth.auth_handler import get_current_active_user
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse
-from schemas.token import TokenPayload
 from schemas.user import UserInfo
 
 router = APIRouter()

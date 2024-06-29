@@ -1,7 +1,9 @@
 from typing import List
 
 from auth.auth_handler import get_jwt_token, validate_sensitive_search
+from core.config import CLOUDFLARE_ENABLED, CLOUDFLARE_SECRET_KEY
 from core.database import get_db
+from dependencies.data_leak_dependency import verify_turnstile_token_search
 from fastapi import APIRouter, Depends, HTTPException, status
 from models.breach import Breach
 from models.data_leak import DataLeak
@@ -15,7 +17,11 @@ from utils.crytpography import get_hash
 router = APIRouter()
 
 
-@router.post("/data/", response_model=List[DataLeakShow])
+@router.post(
+    "/data/",
+    response_model=List[DataLeakShow],
+    dependencies=[Depends(verify_turnstile_token_search)],
+)
 def get_breaches_info(
     payload: DataLeakInput,
     is_full_search: bool = Depends(validate_sensitive_search),
