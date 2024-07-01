@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Search from "@/components/Search";
 import Navbar from "@/components/Navbar";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DataLeak } from "@/models/Breach";
 import {
   getDataLeaksByValueAndType,
@@ -20,9 +20,7 @@ import {
   QueryType,
 } from "@/api/api";
 import { FaCheckCircle } from "react-icons/fa";
-import { MdOutlineSecurity } from "react-icons/md";
 import { FaIdCard } from "react-icons/fa";
-import { MdOutlinePhishing } from "react-icons/md";
 import { FcIdea } from "react-icons/fc";
 import { FaUnlock } from "react-icons/fa6";
 import { AiOutlineSafety } from "react-icons/ai";
@@ -44,14 +42,13 @@ import { safetyTips } from "@/utils/webSafetyTips";
 import { useAuth } from "@/contexts/AuthContext";
 import Script from "next/script";
 import Turnstile from "@/components/Turnstile";
+import { SearchQuery } from "@/models/SearchQuery";
 
 const redColor = "#ED342F";
 const CLOUDFLARE_ENABLED = process.env.NEXT_PUBLIC_CLOUDFLARE_ENABLED;
-// const CLOUDFLARE_SITE_KEY = process.env.NEXT_PUBLIC_CLOUDFLARE_SITE_KEY;
-// const CLOUDFLARE_SITE_KEY = "1x00000000000000000000AA"; // Always Pass
-// const CLOUDFLARE_SITE_KEY = "2x00000000000000000000AB"; // Always Blocks
-// const CLOUDFLARE_SITE_KEY = "1x00000000000000000000BB"; // Always Passes Invisible
-const CLOUDFLARE_SITE_KEY = "3x00000000000000000000FF"; // Forces interactive challenge
+const CLOUDFLARE_SITE_KEY = process.env.NEXT_PUBLIC_CLOUDFLARE_SITE_KEY
+  ? process.env.NEXT_PUBLIC_CLOUDFLARE_SITE_KEY
+  : "";
 
 export default function Home() {
   const { user } = useAuth();
@@ -73,19 +70,22 @@ export default function Home() {
   const [tableData, setTableData] = useState<TypesLeak[]>([]);
   const [tabValue, setTabValue] = useState(configEnabledSearchKeys[0]);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileNeedReset, setTurnstileNeedReset] = useState<boolean>(false);
 
   async function handleSearch(query: string, queryType: QueryType) {
-    console.log("Token? ", turnstileToken);
-    if (turnstileToken == null) {
-      console.log("Token nulllll? ", turnstileToken);
-      setError("Por favor, complete el CAPTCHA");
-      return;
+    const searchQuery: SearchQuery = { value: query, dtype: queryType };
+    if (CLOUDFLARE_ENABLED?.toLowerCase() === "true") {
+      if (turnstileToken == null) {
+        setError("Por favor, complete el CAPTCHA");
+        return;
+      }
+      searchQuery.turnstile_response = turnstileToken;
     }
     setResponseReceived(false);
     setWaitingResponse(true);
     const [dataLeaksList, gotError]: [DataLeak[], boolean] =
-      // await getDataLeaksByValueAndType(emailQuery, QueryType.Email);
-      await getDataLeaksByValueAndTypeDemo(query, queryType);
+      // await getDataLeaksByValueAndType(query, QueryType.Email);
+      await getDataLeaksByValueAndTypeDemo(searchQuery);
     if (gotError) {
       setError(
         "Ha ocurrido un error innesperado, inténtelo de nuevo más tarde."
@@ -93,6 +93,7 @@ export default function Home() {
     } else {
       setError("");
     }
+    setTurnstileNeedReset(true);
     setDataLeaks(dataLeaksList);
     setResponseReceived(true);
     setWaitingResponse(false);
@@ -209,10 +210,6 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-start md:px-24 pt-2 pb-20">
       <Navbar />
       <div className="flex flex-col mt-5 w-full items-center justify-start">
-        {/* </div> */}
-
-        {/* <div className="z-10 max-w-5xl w-full font-mono text-sm lg:flex flex-col"> */}
-        {/* <div className='flex-col w-[80%]'> */}
         <div className="flex flex-col w-full items-center text-center py-3">
           <h2 className="font-black text-2xl text-cyan-500">
             ¡Bienvenid@ a Data Leak Checker!
@@ -271,6 +268,8 @@ export default function Home() {
                       <Turnstile
                         siteKey={CLOUDFLARE_SITE_KEY}
                         onTokenChange={setTurnstileToken}
+                        needReset={turnstileNeedReset}
+                        setNeedReset={setTurnstileNeedReset}
                       ></Turnstile>
                     )}
                     <Button type="submit">Buscar</Button>
@@ -290,7 +289,7 @@ export default function Home() {
                   <p className="text-lg text-red-hackerlab">{error}</p>
                 </div>
               )}
-              {responseReceived ? (
+              {responseReceived && !error ? (
                 <div className="flex flex-col mt-5 w-full items-center justify-start">
                   <div className="flex flex-col w-full self-start justifiy-start items-center">
                     {dataLeaks.length > 0 ? (
@@ -365,8 +364,6 @@ export default function Home() {
                       <Loader2 size={"3em"} className="animate-spin"></Loader2>
                     </div>
                   ) : (
-                    // <p>Buscando...</p>
-                    // Landing page
                     <LandingPage></LandingPage>
                   )}
                 </>
@@ -410,10 +407,6 @@ const LandingPage = ({}) => {
             confidencial
           </b>
           &rdquo;
-          {/* . Algunos ejemplos pueden ser datos personales (direcciones de
-          correos, cuentas bancarias, contraseñas, RUTs) o datos corporativos
-          (información de clientes, propiedad intelectual, información
-          financiera).&rdquo; */}
         </p>
       </div>
       <div className="py-3">
@@ -434,10 +427,6 @@ const LandingPage = ({}) => {
               <b>Prevenir accesos a tus cuentas</b> por terceros, cambiando tu
               contraseñas/credenciales filtradas oportunamente
             </p>
-            {/* <p className="text-muted-foreground">
-              Obtener acceso a tus cuentas, mediantes contraseñas/credenciales
-              filtradas
-            </p> */}
           </div>
           <div className="flex flex-col items-center">
             <FaIdCard fontSize={"5em"} className="my-3"></FaIdCard>
@@ -445,17 +434,9 @@ const LandingPage = ({}) => {
               <b>Evitar una suplantación de identidad</b>, conociendo qué datos
               peronales o credenciales se han visto comprometidas
             </p>
-            {/* <p className="text-muted-foreground">
-              Suplantación de identidad, al tener a disposición credenciales e
-              información personal{" "}
-            </p> */}
           </div>
           <div className="flex flex-col items-center">
             <LuMailWarning fontSize={"5em"} className="my-3"></LuMailWarning>
-            {/* <MdOutlinePhishing
-              fontSize={"5em"}
-              className="my-3"
-            ></MdOutlinePhishing> */}
             <p className="text-muted-foreground">
               <b>Estar atento/a frente a intentos de estafas</b>, relacionadas a
               la información filtrada

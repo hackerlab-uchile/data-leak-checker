@@ -3,6 +3,7 @@ from typing import List
 
 from auth.auth_handler import get_jwt_token, validate_sensitive_search
 from core.database import get_db
+from dependencies.data_leak_dependency import verify_turnstile_token_search
 from fastapi import APIRouter, Depends
 from models.breach import Breach
 from models.breach_data import BreachData
@@ -18,7 +19,11 @@ from sqlalchemy.sql.expression import func
 router = APIRouter()
 
 
-@router.post("/data/", response_model=List[DataLeakShow])
+@router.post(
+    "/data/",
+    response_model=List[DataLeakShow],
+    dependencies=[Depends(verify_turnstile_token_search)],
+)
 def get_breaches_demo(
     payload: DataLeakInput,
     is_full_search: bool = Depends(validate_sensitive_search),

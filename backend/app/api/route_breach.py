@@ -1,7 +1,6 @@
 from typing import List
 
 from auth.auth_handler import get_jwt_token, validate_sensitive_search
-from core.config import CLOUDFLARE_ENABLED, CLOUDFLARE_SECRET_KEY
 from core.database import get_db
 from dependencies.data_leak_dependency import verify_turnstile_token_search
 from fastapi import APIRouter, Depends, HTTPException, status

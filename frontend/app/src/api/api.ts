@@ -1,5 +1,6 @@
 import { DataLeak } from "@/models/Breach";
 import { ErrorMsg } from "@/models/ErrorMsg";
+import { SearchQuery } from "@/models/SearchQuery";
 import { User } from "@/models/User";
 import { VerificationResponse } from "@/models/VerificationResponse";
 import apiClient from "@/utils/axios";
@@ -11,11 +12,9 @@ export enum QueryType {
 }
 
 export async function getDataLeaksByValueAndType(
-  query: string,
-  type: QueryType
+  data: SearchQuery
 ): Promise<[DataLeak[], boolean]> {
   let response;
-  const data = { value: query, dtype: type };
   let got_error: boolean = false;
   try {
     response = await apiClient.post<DataLeak[]>("/breach/data/", data, {
@@ -35,11 +34,9 @@ export async function getDataLeaksByValueAndType(
 }
 
 export async function getDataLeaksByValueAndTypeDemo(
-  query: string,
-  type: QueryType
+  data: SearchQuery
 ): Promise<[DataLeak[], boolean]> {
   let response;
-  const data = { value: query, dtype: type };
   let got_error: boolean = false;
   try {
     response = await apiClient.post<DataLeak[]>("/demo/data/", data, {

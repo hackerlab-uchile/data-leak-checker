@@ -471,9 +471,6 @@ const CodeVerification = ({
         setInputError("");
         setLoadingNextPage(true);
         login();
-        // router.push(`/?search=${search}&type=${searchType}`, "/", {
-        //   shallow: true,
-        // });
       } else if (!isValid && errorMsg === "") {
         setInputError("Código incorrecto");
       } else {

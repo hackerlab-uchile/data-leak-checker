@@ -1,34 +1,36 @@
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "./ui/button";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { RiArrowDropDownLine } from "react-icons/ri";
-
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FaCircleUser } from "react-icons/fa6";
-import { useEffect, useRef, useState } from "react";
-import { Separator } from "./ui/separator";
-import { IoLogOutOutline } from "react-icons/io5";
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Script from "next/script";
 
 export default function Turnstile({
   siteKey,
   onTokenChange,
   onErrorCallback,
+  needReset,
+  setNeedReset,
 }: {
   siteKey: string;
   onTokenChange?: (token: string | null) => void;
   onErrorCallback?: () => void;
+  needReset: boolean;
+  setNeedReset: Dispatch<SetStateAction<boolean>>;
 }) {
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
+  const [currentWidgetId, setCurrentWidgetId] = useState<string>();
+
+  useEffect(() => {
+    if (needReset && currentWidgetId) {
+      (window as any).turnstile.reset(currentWidgetId);
+      setNeedReset(false);
+    }
+  }, [needReset, currentWidgetId]);
 
   useEffect(() => {
     const checkTurnstileLoaded = () => {
@@ -56,6 +58,7 @@ export default function Turnstile({
           onTokenChange?.(null);
         },
       });
+      setCurrentWidgetId(widgetId);
       return () => (window as any).turnstile.remove(widgetId);
     }
   }, [turnstileLoaded]);
