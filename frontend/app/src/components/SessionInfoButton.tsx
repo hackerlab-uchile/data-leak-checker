@@ -15,12 +15,13 @@ import {
 import { FaCircleUser } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import { Separator } from "./ui/separator";
-import { IoLogOutOutline } from "react-icons/io5";
+import { IoLogOutOutline, IoSearch } from "react-icons/io5";
+import useWindowSize, { SizeType } from "@/hooks/useWindowSize";
 
 export default function SessionInfoButton() {
   const { user, login, logout, ready } = useAuth();
-  const router = useRouter();
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const { width } = useWindowSize();
 
   function startTimer(dateString: string) {
     let timeDifference = new Date(dateString).getTime() - Date.now();
@@ -48,12 +49,8 @@ export default function SessionInfoButton() {
   }
 
   useEffect(() => {
-    // if (ready) {
     if (ready && user) {
       let timer = startTimer(user.exp);
-      // let date = new Date();
-      // date.setHours(date.getHours(), date.getMinutes() + 20, 15);
-      // let timer = startTimer(date.toISOString());
       return () => clearInterval(timer);
     }
   }, [ready]);
@@ -64,45 +61,66 @@ export default function SessionInfoButton() {
         <Button
           type="button"
           className="self-end justify-self-end"
-          onClick={logout}
           variant="outline"
           asChild
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <p className="mr-1">{timeLeftCustomFormatting(timeLeft)}</p>
-                <Separator orientation="vertical" />
-                <FaCircleUser className="mx-1" size={"2em"} />
-                <RiArrowDropDownLine size={"2em"} />
-              </Button>
+              {width && width >= SizeType.SM ? (
+                <Button variant="outline">
+                  <DropdownMenuLabel>{user.value}</DropdownMenuLabel>
+                  <Separator orientation="vertical" />
+                  <p className="ml-1.5">{timeLeftCustomFormatting(timeLeft)}</p>
+                  <RiArrowDropDownLine size={"2em"} />
+                </Button>
+              ) : (
+                <Button variant="outline">
+                  <p>{timeLeftCustomFormatting(timeLeft)}</p>
+                  <Separator className="mx-1" orientation="vertical" />
+                  <FaCircleUser className="mr-1" size={"2em"} />
+                  <RiArrowDropDownLine size={"2em"} />
+                </Button>
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuLabel>{user.value}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/?search=${user.value}&type=${user.dtype}`}>
-                  Ver filtraciones
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => logout()}>
-                <IoLogOutOutline className="mx-1" size={"1.5em"} />
-                Cerrar Sesión
-              </DropdownMenuItem>
+              {width && width >= SizeType.SM ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/?search=${user.value}&type=${user.dtype}`}>
+                      <IoSearch className="mr-1" size={"1.2em"}></IoSearch>
+                      Ver filtraciones
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => logout()}>
+                    <IoLogOutOutline className="mr-1" size={"1.2em"} />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuLabel>{user.value}</DropdownMenuLabel>
+                  <DropdownMenuItem disabled>
+                    <p className="mr-1">
+                      Tiempo restante: {timeLeftCustomFormatting(timeLeft)}
+                    </p>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/?search=${user.value}&type=${user.dtype}`}>
+                      <IoSearch className="mr-1" size={"1em"}></IoSearch>
+                      Ver filtraciones
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => logout()}>
+                    <IoLogOutOutline className="mr-1" size={"1.2em"} />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </Button>
       ) : (
-        // <Button
-        //   className="self-end justify-self-end"
-        //   onClick={logout}
-        //   variant="outline"
-        //   asChild
-        // >
-        //   <Link href={"/"} className="block">
-        //     <h3 className="font-bold">Cerrar Sesión</h3>
-        //   </Link>
-        // </Button>
         <Button className="self-end justify-self-end" variant="outline" asChild>
           <Link href={"/verification"} className="block">
             <h3 className="font-bold">Autenticarse</h3>

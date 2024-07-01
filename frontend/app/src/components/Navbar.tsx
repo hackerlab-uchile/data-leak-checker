@@ -26,7 +26,7 @@ const Navbar = () => {
       <nav className="w-full relative top-0 z-40 ">
         <div className="container mx-auto">
           <div className="flex items-center justify-between py-2">
-            <div className="flex w-full sm:w-1/4 items-center justify-between">
+            <div className="flex w-full sm:w-2/4 items-center justify-between">
               {/* <div className="flex w-full items-center justify-between"> */}
               {/* Logo Sitio */}
               <Link href="/" className="block">
@@ -34,7 +34,7 @@ const Navbar = () => {
               </Link>
             </div>
             {/* <div className="flex w-3/4 flex-wrap items-center justify-between"> */}
-            <div className="flex sm:w-3/4 gap-x-5 flex-wrap items-center justify-center">
+            <div className="flex sm:w-2/4 gap-x-5 flex-wrap items-center justify-center">
               {/* <div className="flex flex-row sm:w-3/4 gap-x-5 flex-wrap "> */}
               {NAVBAR_ITEMS.map((item) => (
                 <Button

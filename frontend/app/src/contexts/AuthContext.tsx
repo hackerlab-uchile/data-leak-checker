@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: AuthProps) => {
 
   async function logout() {
     setUser(null);
-    logout_user();
+    await logout_user();
     router.reload();
   }
 
