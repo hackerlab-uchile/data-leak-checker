@@ -120,7 +120,7 @@ async def send_email_verify(
         user_id=user.id, address=request.client.host, db=db
     )
     html = f"""<p>¡Hola! A continuación, puedes ver tu código de verificación. ¡No lo compartas!</p>
-    <p><b>{vcode.code}</b></p>
+    <p><b>{vcode.format_code_to_send}</b></p>
     """
     message = MessageSchema(
         subject="Verificación de correo electrónico",

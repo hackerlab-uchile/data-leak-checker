@@ -29,6 +29,7 @@ import CircleNumber from "@/components/CircleNumber";
 import {
   InputOTP,
   InputOTPGroup,
+  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
@@ -524,27 +525,36 @@ const CodeVerification = ({
             maxLength={verificationCodeLength}
             disabled={loadingNextPage ? true : false}
           >
-            {Array.from(Array(verificationCodeLength).keys()).map((i) => [
-              <InputOTPGroup key={i}>
-                <InputOTPSlot
-                  index={i}
-                  className={
-                    inputError.length === 0 ? "" : "border-red-hackerlab"
-                  }
-                />
-              </InputOTPGroup>,
-            ])}
-            {/* <InputOTPGroup>
-              {Array.from(Array(3).keys()).map((i) => [
+            <InputOTPGroup>
+              {Array.from(
+                Array(Math.floor(verificationCodeLength / 2)).keys()
+              ).map((i) => [
                 <InputOTPSlot
                   key={i}
-                  index={i + 3}
+                  index={i}
                   className={
                     inputError.length === 0 ? "" : "border-red-hackerlab"
                   }
                 />,
               ])}
-            </InputOTPGroup> */}
+            </InputOTPGroup>
+            <InputOTPSeparator></InputOTPSeparator>
+            <InputOTPGroup>
+              {Array.from(
+                Array(
+                  verificationCodeLength -
+                    Math.floor(verificationCodeLength / 2)
+                ).keys()
+              ).map((i) => [
+                <InputOTPSlot
+                  key={i}
+                  index={Math.floor(verificationCodeLength / 2) + i}
+                  className={
+                    inputError.length === 0 ? "" : "border-red-hackerlab"
+                  }
+                />,
+              ])}
+            </InputOTPGroup>
           </InputOTP>
           {inputError !== "" && (
             <p className="text-red-hackerlab text-center">{inputError}</p>
